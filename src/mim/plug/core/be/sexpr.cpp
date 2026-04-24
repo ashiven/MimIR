@@ -387,7 +387,7 @@ std::string Emitter::emit_cons_type(BB& bb, View<const Def*> ops) {
     std::ostringstream os;
 
     if (ops.size() == 0) {
-        print(os, "(cons nil)");
+        print(os, "nil");
         return os.str();
     }
 
@@ -522,7 +522,7 @@ std::string Emitter::emit_cons(std::vector<std::string> op_vals) {
 
     if (op_vals.size() == 0) {
         ++tab;
-        tab.lnprint(os, "(cons nil)");
+        tab.lnprint(os, "nil");
         --tab;
         return os.str();
     }
