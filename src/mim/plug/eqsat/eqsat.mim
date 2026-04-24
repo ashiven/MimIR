@@ -11,12 +11,13 @@
 ///
 /// It achieves this in three steps:
 ///
-/// 1) Convert the program into a series of symbolic expressions, one for each top-level lambda
-/// 2) Passe these expressions to the 'egg' equality saturation engine for rewriting
-/// 3) Rewrite the program based on the results of step 2)
+/// 1) Converts the program into a series of symbolic expressions, one for each closed mutable Def.
+/// 2) Passes these expressions to the 'egg' or 'slotted-egraphs' equality saturation engine for rewriting.
+/// 3) Reconstructs the program based on the results of step 2).
 ///
-/// Rewrite rules, predefined sets of rewrite rules, and a cost function may be provided
-/// via configuration lambdas. See the examples in the lit test suite for specific implementations.
+/// MimIR-defined rewrite rules, sets of rewrite rules defined in 'egg' or 'slotted-egraphs'
+/// and a cost function may be specified via configuration functions in MimIR.
+/// Refer to the examples in the lit test suite for specific implementations.
 ///
 ///
 /// ## Dependencies
@@ -76,9 +77,6 @@ axm %eqsat.rulesets: {n: Nat} → «n; %eqsat.Ruleset» → %eqsat.Ruleset;
 ///
 axm %eqsat.rules: {n: Nat, Ts: «n; *»} → «i: n; Ts#i» → %eqsat.Rules;
 ///
-///
-/// TODO: We could add another config function here to configure whether to use regular egg
-///       or slotted-egg to perform equality saturation.
 ///
 /// ## Passes and Phases
 ///
