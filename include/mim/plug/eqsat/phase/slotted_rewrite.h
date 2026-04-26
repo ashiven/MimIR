@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include <mim/phase.h>
 
 #include "mim/def.h"
@@ -151,6 +153,16 @@ private:
     MimNode get_node_unsafe(uint32_t id) { return res_[id]; }
     std::string get_symbol(uint32_t id) { return res_[id].symbol.c_str(); }
     uint64_t get_num(uint32_t id) { return res_[id].num; }
+    std::string get_slot(uint32_t id) { return res_[id].slot.c_str(); }
+    std::vector<uint32_t> get_cons_flat(uint32_t id) {
+        std::vector<uint32_t> flattened;
+        auto curr_cons = get_node_unsafe(id);
+        while (curr_cons.kind != MimKind::Nil) {
+            flattened.push_back(curr_cons.children[0]);
+            curr_cons = get_node_unsafe(curr_cons.children[1]);
+        }
+        return flattened;
+    }
 
     std::string remove_uid(std::string name) {
         if (auto pos = name.rfind("_"); pos != std::string::npos) {

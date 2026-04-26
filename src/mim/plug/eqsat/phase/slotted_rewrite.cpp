@@ -99,21 +99,18 @@ const Def* SlottedRewrite::init_lam(uint32_t id, MimNode node) { return nullptr;
 const Def* SlottedRewrite::init_con(uint32_t id, MimNode node) {
     if (DEBUG) std::cout << "init - current node(" << id << "): " << mim_node_str(node).c_str() << " - ";
     auto domain_id      = node.children[2];
-    auto domain         = get_node(MimKind::Var, domain_id);
-    auto domain_type    = convert(domain.children.back(), true);
+    auto domain_type    = convert(domain_id, true);
     auto new_con        = new_world().mut_con(domain_type);
     auto con_name       = get_symbol(node.children[1]);
     auto con_name_nouid = remove_uid(con_name);
     new_con->set(con_name_nouid);
     register_lam(con_name, new_con);
 
-    // 'domain' is a var node so index 0 contains its name and back() its type.
-    // For reference: (var <name> [<proj1> <proj2>...] <type>)
-    auto var_name       = get_symbol(domain.children[0]);
-    auto var_name_nouid = remove_uid(var_name);
-    auto var            = new_con->var();
-    var->set(var_name_nouid);
+    auto var_name = get_slot(id);
+    auto var      = new_con->var();
+    var->set(var_name);
     register_var(var_name, var);
+    // fix
     register_projs(domain_id);
 
     if (DEBUG) std::cout << new_con << "\n";
@@ -269,11 +266,13 @@ const Def* SlottedRewrite::convert_pack(uint32_t id, MimNode node) {
     return new_pack;
 }
 
-// TODO: (tuple <elem-cons>)
+// (tuple <elem-cons>)
 const Def* SlottedRewrite::convert_tuple(uint32_t id, MimNode node) {
+    auto elems = get_cons_flat(node.children[1]);
+
     DefVec ops;
-    for (auto child : node.children) {
-        auto op = get_def(child);
+    for (auto elem : elems) {
+        auto op = get_def(elem);
         ops.push_back(op);
     }
     auto new_tuple = new_world().tuple(ops);
