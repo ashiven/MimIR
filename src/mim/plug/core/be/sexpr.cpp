@@ -129,7 +129,6 @@ private:
     std::ostringstream func_impls_;
 };
 
-// TODO: slotted use of internal, closed lam (see rebuild_pow.mim)
 std::string Emitter::id(const Def* def, bool is_var_use, bool omit_prefix) const {
     std::string prefix = slotted() && !omit_prefix ? "$" : "";
     std::string id;
@@ -147,6 +146,9 @@ std::string Emitter::id(const Def* def, bool is_var_use, bool omit_prefix) const
         id = def->sym().str();
     else if (def->is_external())
         id = def->sym().str();
+    // Top-level lambdas should never be treated as slots ($-prefixed)
+    else if (def->isa<Lam>() && def->is_closed())
+        id = def->unique_name();
     else
         id = prefix + def->unique_name();
 
