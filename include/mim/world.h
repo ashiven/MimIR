@@ -17,10 +17,6 @@
 namespace mim {
 
 template<class T>
-concept DefPtr = std::is_pointer_v<std::remove_reference_t<T>>
-              && std::is_base_of_v<Def, std::remove_pointer_t<std::remove_reference_t<T>>>;
-
-template<class T>
 concept Enum = std::is_enum_v<std::remove_reference_t<T>>;
 
 class Driver;
