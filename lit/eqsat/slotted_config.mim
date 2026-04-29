@@ -1,0 +1,25 @@
+
+// RUN: %mim %s -o -
+plugin core;
+// plugin eqsat;
+
+// If you want to use the 'slotted-egraphs' implementation
+// instead of 'egg' just define the config function below.
+fun extern _impl(): %eqsat.Impl =
+    return %eqsat.slotted;
+
+// Note that you need to provide specific prefixes in the names
+// of your rule variables. And variable starting with "pat_" is
+// interpreted as a pattern variable so "pat_foo" becomes "?foo"
+// and any variable starting with "slot_" is seen as a slot so "slot_bar"
+// will be converted to "(var $bar)".
+
+// rule foo (pat_a: Nat, slot_b: Nat) : (%core.nat.add (pat_a, (%core.nat.sub (slot_b, pat_a)))) => slot_b;
+// fun extern _rules(): %eqsat.Rules =
+//     return (%eqsat.rules (foo));
+
+fun extern _cost_fn(): %eqsat.CostFun =
+    return %eqsat.AstSize;
+
+con extern mul_lit_nat [a: Nat, b: Nat, return : Cn Nat] =
+    return (%core.nat.add (a, (%core.nat.sub (b, a))));
