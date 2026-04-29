@@ -25,16 +25,17 @@ MimIR is well suited for DSL compilers, tensor compilers, automatic differentiat
 
 ## 💡 Why MimIR?
 
-| Feature                                                                         | LLVM                         | MLIR                                 | MimIR                                                                                                                                                                                |
-| ------------------------------------------------------------------------------- | ---------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [Higher-order functions](https://en.wikipedia.org/wiki/Higher-order_function)   | ❌                           | ⚠️ (regions only)                    | ✅ (first-class functions)                                                                                                                                                           |
-| [Parametric polymorphism](https://en.wikipedia.org/wiki/System_F)               | ❌                           | ❌                                   | ✅                                                                                                                                                                                   |
-| [Type-level abstraction](https://en.wikipedia.org/wiki/System_F#System_F%CF%89) | ❌                           | ❌                                   | ✅                                                                                                                                                                                   |
-| [Dependent types](https://en.wikipedia.org/wiki/Calculus_of_constructions)      | ❌                           | ❌                                   | ✅                                                                                                                                                                                   |
-| Semantic extensibility                                                          | ❌                           | 🔧 (dialect-specific C++ semantics)  | ✅ (typed axioms)                                                                                                                                                                    |
-| Program representation                                                          | CFG + <br> instruction lists | CFG/regions + <br> instruction lists | Arbitrary expressions <br> (direct style + [CPS](https://en.wikipedia.org/wiki/Continuation-passing_style))                                                                          |
-| Structural foundation                                                           | CFG + <br> dominance         | CFG/regions + <br> dominance         | Free variables + nesting                                                                                                                                                             |
-| DSL embedding / <br> semantics retention                                        | ⬇️ Low                       | ➡️ Medium <br> (dialects, lowering)  | ⬆️ High ([CC](https://en.wikipedia.org/wiki/Calculus_of_constructions), [partial evaluation](https://en.wikipedia.org/wiki/Partial_evaluation), typed axioms, normalizers, lowering) |
+| Feature                                                                             | LLVM                         | MLIR                                   | MimIR                                                                                                                                                                                |
+| ----------------------------------------------------------------------------------- | ---------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [Higher-order functions](https://en.wikipedia.org/wiki/Higher-order_function)       | ❌                           | ⚠️ (regions only)                      | ✅ (first-class functions)                                                                                                                                                           |
+| [Parametric polymorphism](https://en.wikipedia.org/wiki/System_F)                   | ❌                           | ❌                                     | ✅                                                                                                                                                                                   |
+| [Type operators](https://en.wikipedia.org/wiki/Type_constructor)                    | ❌                           | ❌                                     | ✅                                                                                                                                                                                   |
+| [Higher-kinded polymorphism](https://en.wikipedia.org/wiki/System_F#System_F%CF%89) | ❌                           | ❌                                     | ✅                                                                                                                                                                                   |
+| [Dependent types](https://en.wikipedia.org/wiki/Calculus_of_constructions)          | ❌                           | ❌                                     | ✅                                                                                                                                                                                   |
+| Semantic extensibility                                                              | ❌                           | 🔧 (dialect-specific C++ semantics)    | ✅ (typed axioms)                                                                                                                                                                    |
+| Program representation                                                              | CFG + <br> instruction lists | CFG / regions + <br> instruction lists | Arbitrary expressions <br> (direct style + [CPS](https://en.wikipedia.org/wiki/Continuation-passing_style))                                                                          |
+| Structural foundation                                                               | CFG + <br> dominance         | CFG / regions + <br> dominance         | Free variables + nesting                                                                                                                                                             |
+| DSL embedding / <br> semantics retention                                            | ⬇️ Low                       | ➡️ Medium <br> (dialects, lowering)    | ⬆️ High ([CC](https://en.wikipedia.org/wiki/Calculus_of_constructions), [partial evaluation](https://en.wikipedia.org/wiki/Partial_evaluation), typed axioms, normalizers, lowering) |
 
 @note The table compares native IR-level support and representation, not what can be emulated via custom IR extensions, closure conversion, lowering, or external analyses.
 
@@ -138,7 +139,7 @@ MimIR is licensed under the [MIT License](https://github.com/mimir/mimir/blob/ma
 
 ## 📖 Publications
 
-* **SSA without Dominance for Higher-Order Programs** <br>
+- **SSA without Dominance for Higher-Order Programs** <br>
   Roland Leißa, Johannes Griebler <br>
   [![PLDI 2026](https://img.shields.io/badge/PLDI-2026-blue?style=flat-square)](https://pldi26.sigplan.org)
   [![ACM](https://img.shields.io/badge/ACM-10.1145/3808286-blue?style=flat-square&logo=acm)](https://doi.org/10.1145/3808286)
@@ -146,7 +147,7 @@ MimIR is licensed under the [MIT License](https://github.com/mimir/mimir/blob/ma
   [![zenodo](https://img.shields.io/badge/-10.5281%2Fzenodo.19069678-blue?style=flat-square&logo=zenodo&logoColor=white&labelColor=555&logoSize=auto)](https://doi.org/10.5281/zenodo.19069678)
   <br><br>
 
-* **MimIrADe: Automatic Differentiation in MimIR** <br>
+- **MimIrADe: Automatic Differentiation in MimIR** <br>
   Marcel Ullrich, Sebastian Hack, Roland Leißa <br>
   [![CC 2025](https://img.shields.io/badge/CC-2025-blue?style=flat-square)](https://conf.researchr.org/home/CC-2025)
   [![PDF](https://img.shields.io/badge/PDF-grey?style=flat-square&logo=readthedocs)](https://raw.githubusercontent.com/leissa/leissa/main/uhl25.pdf)
@@ -155,7 +156,7 @@ MimIR is licensed under the [MIT License](https://github.com/mimir/mimir/blob/ma
   [![dblp](https://img.shields.io/badge/dblp-grey?style=flat-square&logo=dblp)](https://dblp.uni-trier.de/rec/conf/cc/UllrichHL25.html?view=bibtex)
   <br><br>
 
-* **MimIR: An Extensible and Type-Safe Intermediate Representation for the DSL Age** <br>
+- **MimIR: An Extensible and Type-Safe Intermediate Representation for the DSL Age** <br>
   Roland Leißa, Marcel Ullrich, Joachim Meyer, Sebastian Hack <br>
   [![POPL 2025](https://img.shields.io/badge/POPL-2025-blue?style=flat-square)](https://conf.researchr.org/home/POPL-2025)
   [![PDF](https://img.shields.io/badge/PDF-grey?style=flat-square&logo=readthedocs)](https://raw.githubusercontent.com/leissa/leissa/main/lumh25.pdf)
