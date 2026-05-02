@@ -8,8 +8,98 @@
 ///
 /// ## Operations
 ///
-/// ### %%rise.const_idx
-///
-/// The 42 constant, evaluated using a normalizer
-///
-axm %rise.const_idx: [n: Nat] → Idx n, normalize_const;
+
+/// Unary
+axm %rise.id:               {T: *} → T → T
+axm %rise.neg:              {T: *} → T → T
+
+/// Binary
+axm %rise.add:              {T: *} → T → T → T
+axm %rise.sub:              {T: *} → T → T → T
+axm %rise.mul:              {T: *} → T → T → T
+axm %rise.div:              {T: *} → T → T → T
+axm %rise.mod:              {T: *} → T → T → T
+
+/// Ternary
+axm %rise.select:           {T: *} → Bool → T → T → T
+
+/// Comparison
+axm %rise.not               Bool   → Bool
+axm %rise.gt:               {T: *} → T → T → Bool
+axm %rise.lt:               {T: *} → T → T → Bool
+axm %rise.equal:            {T: *} → T → T → Bool
+
+/// Cast
+axm %rise.cast:             {S: *}   → {T: *} → S → T
+axm %rise.idx2nat:          {s: Nat} → Idx s  → Nat
+axm %rise.nat2idx:          {s: Nat} → Nat    → Idx s
+
+/// Memory
+axm %rise.let:              {S: *} → {T: *} → S → (S → T) → T
+axm %rise.toMem:            {T: *} → T      → T
+
+/// Foreign functions
+axm %rise.foreignFunction(funDecl: rise.core.ForeignFunction.Decl, n: Int): n*((inTs: *) →) (outT: *) → n*(*inTs →) outT
+
+/// Arrays
+axm %rise.arr:              {s: Nat} → {n: Idx s} → {T: *}          → «n; T»
+axm %rise.generate:         {s: Nat} → {T: *}     → Idx s           → T                  → «n; T»
+axm %rise.idx:              {n: Nat} → {T: *}     → Idx n           → «n; T»             → T
+axm %rise.take:             {n: Nat} → {m: Nat}   → {T: *}          → «n+m; T»           → «n; T»
+axm %rise.drop:             {n: Nat} → {m: Nat}   → {T: *}          → «n+m; T»           → «m; T»
+axm %rise.concat:           {n: Nat} → {m: Nat}   → {T: *}          → «n; T»             → «m; T»         → (n+m).t
+axm %rise.split:            {n: Nat} → {m: Nat}   → {T: *}          → (m*n).t            → m.«n; T»
+axm %rise.join:             {n: Nat} → {m: Nat}   → {T: *}          → n.m.t              → (n*m).t
+axm %rise.slide:            {n: Nat} → {sz: Nat}  → (sp: Nat)       → {T: *}             → (sp*n+sz).t → (1+n).sz.t
+axm %rise.circularBuffer:   {n: Nat} → {a: Nat}   → (sz: Nat)       → {s: *}             → {T: *}      → (s → T)    → (n-1+sz).s → n.sz.t
+axm %rise.rotateValues:     {n: Nat} → {sz: Nat}  → {T: *}          → (t → T)            → (n-1+sz).t  → n.sz.t
+axm %rise.transpose:        {n: Nat} → {m: Nat}   → {T: *}          → n.m.t              → m.«n; T»
+axm %rise.gather :          {n: Nat} → {m: Nat}   → {T: *}          → m.idx[n]           → «n; T»      → m.t
+axm %rise.scatter:          {n: Nat} → {m: Nat}   → {T: *}          → n.idx[m]           → «n; T»      → m.t
+axm %rise.reorder:          {T: *  } → {n: Nat}   → (idxF: Nat2Nat) → (idxFinv: Nat2Nat) → «n; T»      → «n; T»
+axm %rise.padCst:           {n: Nat} → {l: Nat}   → (r: Nat)        → {T: *}             → T           → «n; T»     → (l+n+r).t
+axm %rise.padClamp:         {n: Nat} → {l: Nat}   → (r: Nat)        → {T: *}             → «n; T»      → (l+n+r).t
+axm %rise.padEmpty:         {n: Nat} → {r: Nat}   → {T: *}          → «n; T»             → (n+r).t
+axm %rise.zip:              {n: Nat} → {s: *}     → {T: *}          → n.s                → «n; T»      → n.(s, T)
+axm %rise.unzip:            {n: Nat} → {s: *}     → {T: *}          → n.(s, T)           → (n.s, «n; T»)
+
+/// Pairs
+axm %rise.pair:             {s: *} → {T: *} → s      → T → (s, T)
+axm %rise.fst:              {s: *} → {T: *} → (s, T) → s
+axm %rise.snd:              {s: *} → {T: *} → (s, T) → T
+
+/// Vectors
+axm %rise.vec:              {n: Nat} → {T: *}   → T      → vec[t, n]
+axm %rise.asVec:            (n: Nat) → {m: Nat} → {T: *} → (m*n).t → m.vec[t, n]
+axm %rise.asVecAligned:     (n: Nat) → {m: Nat} → {T: *} → (m*n).t → m.vec[t, n]
+axm %rise.asScalar:         {n: Nat} → {m: Nat} → {T: *} → m.vec[t, n] → (m*n).t
+
+/// Map
+axm %rise.map:              {n: Nat} → {s: *}  → {T: *}  → (s  → T)  → n.s     → «n; T»
+axm %rise.mapSeq:           {n: Nat} → {s: *}  → {T: *}  → (s  → T)  → n.s     → «n; T»
+axm %rise.mapSeqUnroll:     {n: Nat} → {s: *}  → {T: *}  → (s  → T)  → n.s     → «n; T»
+axm %rise.mapStream:        {n: Nat} → {s: *}  → {T: *}  → (s  → T)  → n.s     → «n; T»
+axm %rise.iterateStream:    {n: Nat} → {s: *}  → {T: *}  → (s  → T)  → n.s     → «n; T»
+axm %rise.mapFst:           {s1: *}  → {T: *}  → {s2: *} → (s1 → s2) → (s1, T) → (s2, T)
+axm %rise.mapSnd:           {s: *}   → {t1: *} → {t2: *} → (t1 → T2) → (s, T1) → (s, T2)
+
+/// Reduce
+axm %rise.reduce:           {n: Nat} → {T: *} →              (t → T → T) → T → «n; T» → T
+axm %rise.reduceSeq:        {n: Nat} → {s: *} → {T: *} → (t → s → T) → T → n.s → T
+axm %rise.reduceSeqUnroll:  {n: Nat} → {s: *} → {T: *} → (t → s → T) → T → n.s → T
+
+/// Scan
+axm %rise.scanSeq:          {n: Nat} → {s: *} → {T: *} → (s → T → T) → T → n.s → «n; T»
+
+/// Iterate
+axm %rise.iterate:          {n: Nat} → {m: Nat} → (k: Nat) → {T: *} → ((l: Nat) → (l*n).t → l.t) → (m*(n^k)).t → m.t
+
+/// Dependent pairs
+axm %rise.depPair:          {fdT: Nat2*} → (n: Nat) → fdt(n) → (m: Nat ** fdt(m))
+axm %rise.dmatch:           {fdT: Nat2*} → {T: *} → (n: Nat ** fdt(n)) → ((m: Nat) → fdt(m) → T) → T
+
+/// Dependent arrays
+axm %rise.depMapSeq:        {n: Nat} → {ft1: Nat2*}      → {ft2: Nat2*}    → ((k: Nat)                → ft1(k) → ft2(k)) → n..ft1 → n..ft2
+axm %rise.depZip:           {n: Nat} → {ft1: Nat2*}      → {ft2: Nat2*}    → n..ft1                   → n..ft2 → n..(i: Nat |→ (ft1(i), ft2(i)) )
+axm %rise.depJoin:          {n: Nat} → {lenF: Nat2Nat}   → {T: *}          → n..(i: Nat |→ lenF(i).t) → (sum_(i=0)^(n-1) lenF(i)).t
+axm %rise.partition:        {n: Nat} → {T: *} → (m: Nat) → (lenF: Nat2Nat) → «n; T»                   → m..(i: Nat |→ lenF(i).t)
