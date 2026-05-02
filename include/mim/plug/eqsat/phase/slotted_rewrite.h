@@ -13,8 +13,8 @@
 
 namespace mim::plug::eqsat {
 
-const bool DEBUG        = true;
-const bool DEBUG_SCOPES = true;
+const bool DEBUG        = false;
+const bool DEBUG_SCOPES = false;
 
 class SlottedRewrite : public Phase, public Rewriter {
 public:
