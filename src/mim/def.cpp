@@ -192,7 +192,8 @@ const Pi* Pi::immutabilize() {
     return nullptr;
 }
 
-const Rule* Rule::immutabilize() { return world().rule(type(), lhs(), rhs(), guard()); }
+// TODO should we ever immutabilize Rules?
+const Rule* Rule::immutabilize() { return nullptr; }
 
 const Def* Sigma::immutabilize() {
     if (is_immutabilizable()) return static_cast<const Sigma*>(world().sigma(ops()));
@@ -425,6 +426,11 @@ bool Def::is_closed() const {
 bool Def::is_open() const {
     if (!local_vars().empty()) return true;
     return !free_vars().empty();
+}
+
+Def* Def::outermost_binder() const {
+    if (is_closed()) return isa_mut();
+    return (*free_vars().begin())->outermost_binder();
 }
 
 /*

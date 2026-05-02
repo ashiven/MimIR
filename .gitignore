@@ -16,5 +16,8 @@ assets/*.fls
 assets/logo.log
 assets/logo.pdf
 assets/*.synctex.gz
+extra/*
+!extra/
+!extra/README.md
 .clangd
 Makefile
