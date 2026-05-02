@@ -15,6 +15,7 @@ set(MIM_PLUGINS
     ord
     refly
     regex
+    rise
     tensor
     tuple
     vec
