@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
     enum Backends { AST, Dot, H, LL, Md, Mim, Nest, SExpr, SlottedSExpr, Num_Backends };
 
     try {
-        static const auto version = "mim command-line utility version " MIM_VER "\n";
+        static const auto version = "mim " MIM_VER " (" MIM_GIT_HASH ")\n";
 
         Driver driver;
         bool show_help         = false;
