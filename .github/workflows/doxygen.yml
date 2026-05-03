@@ -21,7 +21,7 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install newest g++, gdb, graphviz, ghostscript, texlive
+      - name: Install build dependencies (gdb, graphviz, ghostscript, texlive)
         run: |
           sudo apt-get update
           sudo apt-get install -y gdb graphviz ghostscript texlive-latex-base texlive-fonts-recommended texlive-fonts-extra texlive-latex-extra

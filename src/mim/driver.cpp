@@ -1,7 +1,6 @@
 #include "mim/driver.h"
 
-#include <cmath>
-
+#include <iostream>
 #include <sstream>
 #include <stdexcept>
 
@@ -100,16 +99,16 @@ void Driver::load(Sym name) {
     if (!handle) error("cannot open plugin '{}'", name);
 
     if (auto get_info = reinterpret_cast<decltype(&mim_get_plugin)>(dl::get(handle.get(), "mim_get_plugin"))) {
-        assert_emplace(plugins_, name, std::move(handle));
         auto plugin = get_info();
         if (version() != plugin.version) {
             std::ostringstream oss;
             print(oss, "plugin {} has version {} while MimIR has version {}", plugin.name, plugin.version, version());
             if (flags().force_load)
-                std::cerr << "warning: " << oss.str();
+                std::cerr << "warning: " << oss.str() << '\n';
             else
                 throw std::logic_error(oss.str());
         }
+        assert_emplace(plugins_, name, std::move(handle));
         // clang-format off
         if (auto reg = plugin.register_normalizers) reg(normalizers_);
         if (auto reg = plugin.register_stages)      reg(stages_);

@@ -93,7 +93,7 @@ int main(int argc, char** argv) {
         }
 
         if (show_version) {
-            std::cerr << "mim " << driver.version();
+            std::cout << "mim " << driver.version() << std::endl;
             std::exit(EXIT_SUCCESS);
         }
 
