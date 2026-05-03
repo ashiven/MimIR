@@ -43,25 +43,17 @@ def patch_workflow(workflow_file: Path, output_file: Path, plugin: str) -> None:
 
     # Replace the "Clone recursively" checkout step to clone mimir-lang/mimir
     content = re.sub(
-        r'(      - name: Clone (?:mimir )?recursively\n        uses: actions/checkout@v\d)\n        with:\n          submodules: recursive',
+        r'(      - name: Clone (?:mimir )?recursively\n        uses: actions/checkout@v4)\n        with:\n          submodules: recursive',
         r'\1\n        with:\n          repository: mimir-lang/mimir\n          path: mimir\n          submodules: recursive',
         content
     )
 
     # Add the plugin clone step after the mimir clone
     content = re.sub(
-        r'(      - name: Clone (?:mimir )?recursively\n        uses: actions/checkout@v\d\n        with:\n          repository: mimir-lang/mimir\n          path: mimir\n          submodules: recursive)',
+        r'(      - name: Clone (?:mimir )?recursively\n        uses: actions/checkout@v4\n        with:\n          repository: mimir-lang/mimir\n          path: mimir\n          submodules: recursive)',
         lambda m: m.group(1) + f'\n\n      - name: Clone {plugin} plugin\n        uses: actions/checkout@v4\n        with:\n          path: mimir/extra/{plugin}',
         content
     )
-
-    # For windows workflows using v3, ensure the plugin clone also uses v3
-    if 'actions/checkout@v3' in content:
-        content = re.sub(
-            rf'(      - name: Clone {plugin} plugin\n        uses: actions/checkout@)v4(\n        with:\n          path: mimir/extra/{plugin})',
-            r'\1v3\2',
-            content
-        )
 
     # Fix working directories and cmake paths
     content = content.replace('${{github.workspace}}/build', 'mimir/build')
