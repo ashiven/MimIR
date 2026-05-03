@@ -69,7 +69,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     if(BUILD_TESTING)
         include(GoogleTest)
         set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-        add_subdirectory(external/googletest EXCLUDE_FROM_ALL)
+        add_subdirectory(submodules/googletest EXCLUDE_FROM_ALL)
         add_subdirectory(gtest)
         add_subdirectory(lit)
     endif()
@@ -80,10 +80,10 @@ set(ABSL_USE_EXTERNAL_GOOGLETEST ON)
 set(ABSL_ENABLE_INSTALL ON)
 set(FE_ABSL ON)
 
-add_subdirectory(external/abseil-cpp)
-add_subdirectory(external/fe)
-add_subdirectory(external/lyra)
-add_subdirectory(external/rang)
+add_subdirectory(submodules/abseil-cpp)
+add_subdirectory(submodules/fe)
+add_subdirectory(submodules/lyra)
+add_subdirectory(submodules/rang)
 add_subdirectory(src)
 
 if(MIM_BUILD_EXAMPLES)
@@ -116,7 +116,7 @@ install(
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 install(
-    FILES "${PROJECT_SOURCE_DIR}/external/half/include/half.hpp"
+    FILES "${PROJECT_SOURCE_DIR}/submodules/half/include/half.hpp"
     DESTINATION include
 )
 install(
