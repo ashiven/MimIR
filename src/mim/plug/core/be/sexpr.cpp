@@ -155,7 +155,7 @@ std::string Emitter::id(const Def* def, bool is_var_use) const {
     std::string prefix = slotted() && slots_enabled_ ? "$" : "";
     std::string id;
 
-    // In slotted-egg variable-uses need to be explicitly wrapped in a var node i.e. in λx.x (lam $x (var $x))
+    // In slotted-egraphs variable-uses need to be explicitly wrapped in a var node i.e. in λx.x (lam $x (var $x))
     auto var_wrap
         = [&](std::string id) { return slotted() && is_var_use && id.starts_with('$') ? "(var " + id + ")" : id; };
 
