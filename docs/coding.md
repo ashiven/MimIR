@@ -277,7 +277,7 @@ $1 = ...
 To enable it, source `scripts/xdot.gdb` from your `~/.gdbinit`:
 
 ```gdb
-source ~/mim/scripts/xdot.gdb
+source ~/mimir/scripts/xdot.gdb
 ```
 
 Here is the `xdot` GDB command in action:
