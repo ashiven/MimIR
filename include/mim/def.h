@@ -660,7 +660,7 @@ protected:
 
 private:
     Defs reduce_(const Def* arg) const;
-    virtual Def* stub_(World&, const Def*) { fe::unreachable(); }
+    virtual Def* stub_(World&, const Def*) { std::unreachable(); }
     virtual const Def* rebuild_(World& w, const Def* type, Defs ops) const = 0;
 
     template<bool init>

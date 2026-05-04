@@ -220,7 +220,7 @@ inline std::string Emitter::convert(const Def* type, bool simd) {
             case 16: return types_[type] = "half";
             case 32: return types_[type] = "float";
             case 64: return types_[type] = "double";
-            default: fe::unreachable();
+            default: std::unreachable();
         }
     } else if (auto ptr = Axm::isa<mem::Ptr>(type)) {
         auto [pointee, addr_space] = ptr->args<2>();
@@ -267,7 +267,7 @@ inline std::string Emitter::convert(const Def* type, bool simd) {
         }
         print(s, "}}");
     } else {
-        fe::unreachable();
+        std::unreachable();
     }
 
     if (name.empty()) return types_[type] = s.str();
@@ -631,13 +631,13 @@ inline std::string Emitter::emit_bb(BB& bb, const Def* def) {
                     break;
                 }
                 case 64: hex = lit->get<u64>(); break;
-                default: fe::unreachable();
+                default: std::unreachable();
             }
 
             s << "0x" << std::setfill('0') << std::setw(16) << std::right << std::hex << hex;
             return s.str();
         }
-        fe::unreachable();
+        std::unreachable();
     } else if (def->isa<Bot>()) {
         return "undef";
     } else if (auto top = def->isa<Top>()) {
@@ -744,7 +744,7 @@ inline std::string Emitter::emit_bb(BB& bb, const Def* def) {
             case core::ncmp::l:  op += "ult"; break;
             case core::ncmp::le: op += "ule"; break;
             // clang-format on
-            default: fe::unreachable();
+            default: std::unreachable();
         }
 
         return bb.assign(name, "{} i64 {}, {}", op, a, b);
@@ -776,7 +776,7 @@ inline std::string Emitter::emit_bb(BB& bb, const Def* def) {
             case core::bit2:: iff: return bb.assign(name, "and {} {}, {}", neg(a), b);
             case core::bit2::niff: return bb.assign(name, "or  {} {}, {}", neg(a), b);
             // clang-format on
-            default: fe::unreachable();
+            default: std::unreachable();
         }
     } else if (auto shr = Axm::isa<core::shr>(def)) {
         auto [a, b] = shr->args<2>([this](auto def) { return emit(def); });
@@ -839,7 +839,7 @@ inline std::string Emitter::emit_bb(BB& bb, const Def* def) {
             case core::icmp::ul:  op += "ult"; break;
             case core::icmp::ule: op += "ule"; break;
             // clang-format on
-            default: fe::unreachable();
+            default: std::unreachable();
         }
 
         return bb.assign(name, "{} {} {}, {}", op, t, a, b);
@@ -1025,7 +1025,7 @@ inline std::string Emitter::emit_bb(BB& bb, const Def* def) {
                 case math::tri::cos: f += "cos"; break;
                 case math::tri::tan: f += "tan"; break;
                 case math::tri::ahFF: error("this axm is supposed to be unused");
-                default: fe::unreachable();
+                default: std::unreachable();
             }
 
             if (tri.sub() & sub_t(math::tri::h)) f += "h";
@@ -1111,7 +1111,7 @@ inline std::string Emitter::emit_bb(BB& bb, const Def* def) {
             case math::cmp::uge: op += "uge"; break;
             case math::cmp::une: op += "une"; break;
             // clang-format on
-            default: fe::unreachable();
+            default: std::unreachable();
         }
 
         return bb.assign(name, "{} {} {}, {}", op, t, a, b);
@@ -1199,7 +1199,7 @@ inline std::string Emitter::emit_bb(BB& bb, const Def* def) {
                 case core::ncmp::ge: op += "uge"; break;
                 case core::ncmp::l: op += "ult"; break;
                 case core::ncmp::le: op += "ule"; break;
-                default: fe::unreachable();
+                default: std::unreachable();
             }
         } else if (auto icmp_op = Axm::isa<core::icmp, 1>(f)) {
             op = "icmp ";
@@ -1214,7 +1214,7 @@ inline std::string Emitter::emit_bb(BB& bb, const Def* def) {
                 case core::icmp::uge: op += "uge"; break;
                 case core::icmp::ul: op += "ult"; break;
                 case core::icmp::ule: op += "ule"; break;
-                default: fe::unreachable();
+                default: std::unreachable();
             }
         } else if (auto mcmp_op = Axm::isa<math::cmp, 1>(f)) {
             op = "fcmp ";
@@ -1233,7 +1233,7 @@ inline std::string Emitter::emit_bb(BB& bb, const Def* def) {
                 case math::cmp::ug: op += "ugt"; break;
                 case math::cmp::uge: op += "uge"; break;
                 case math::cmp::une: op += "une"; break;
-                default: fe::unreachable();
+                default: std::unreachable();
             }
         } else {
             error("unhandled vec.zip operation: {}", f);

@@ -281,7 +281,7 @@ const Def* normalize_ncmp(const Def* type, const Def* callee, const Def* arg) {
                 case ncmp::le: return world.lit_bool(*la <= *lb);
                 case ncmp::g : return world.lit_bool(*la >  *lb);
                 case ncmp::ge: return world.lit_bool(*la >= *lb);
-                default: fe::unreachable();
+                default: std::unreachable();
             }
             // clang-format on
         }
@@ -339,7 +339,7 @@ const Def* normalize_bit1(const Def* type, const Def* c, const Def* a) {
         switch (id) {
             case bit1::f: return world.lit_idx(*ls, 0);
             case bit1::t: return world.lit_idx(*ls, *ls - 1_u64);
-            case bit1::id: fe::unreachable();
+            case bit1::id: std::unreachable();
             default: break;
         }
 
@@ -391,7 +391,7 @@ const Def* normalize_bit2(const Def* type, const Def* c, const Def* arg) {
             case bit2::nxor: return world.lit_idx_mod(*ls, ~(*la ^  *lb));
             case bit2:: iff: return world.lit_idx_mod(*ls, ~ *la |  *lb);
             case bit2::niff: return world.lit_idx    (*ls,   *la & ~*lb);
-            default: fe::unreachable();
+            default: std::unreachable();
         }
     }
 
@@ -515,7 +515,7 @@ const Def* normalize_wrap(const Def* type, const Def* c, const Def* arg) {
             switch (id) {
                 case wrap::sub: return a;    // a  - 0 -> a
                 case wrap::shl: return a;    // a >> 0 -> a
-                default: fe::unreachable();
+                default: std::unreachable();
                 // add, mul are commutative, the literal has been normalized to the left
             }
         }
@@ -656,7 +656,7 @@ const Def* normalize_trait(const Def*, const Def*, const Def* type) {
             case 16: return world.lit_nat(2);
             case 32: return world.lit_nat(4);
             case 64: return world.lit_nat(8);
-            default: fe::unreachable();
+            default: std::unreachable();
         }
     } else if (type->isa<Sigma>() || type->isa<Meet>()) {
         u64 offset = 0;

@@ -416,7 +416,7 @@ std::string Emitter::emit_type(BB& bb, const Def* type) {
         print(os, "(meet { })", Elem(meet->ops(), [&](auto op) { print(os, "{}", emit_type(bb, op)); }));
     } else {
         error("unsupported type '{}'", type);
-        fe::unreachable();
+        std::unreachable();
     }
 
     return types_[type] = os.str();
@@ -651,7 +651,7 @@ std::string Emitter::emit_bb(BB& bb, const Def* def) {
 
     } else {
         error("Unhandled Def in SExpr backend: {} : {}", def, def->type());
-        fe::unreachable();
+        std::unreachable();
     }
     --tab;
 

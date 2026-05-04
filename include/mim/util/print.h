@@ -158,13 +158,13 @@ std::ostream& print(std::ostream& os, const char* s, T&& t, Args&&... args) {
             case '}':
                 if (detail::match2nd(os, next, s, '}')) continue;
                 assert(false && "unmatched/unescaped closing brace '}' in format string");
-                fe::unreachable();
+                std::unreachable();
             default: os << *s++;
         }
     }
 
     assert(false && "invalid format string for 's'");
-    fe::unreachable();
+    std::unreachable();
 }
 
 /// As above but end with `std::endl`.

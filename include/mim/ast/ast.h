@@ -138,8 +138,8 @@ public:
 
     const Def* emit(Emitter&) const;
     virtual void bind(Scopes&) const = 0;
-    virtual const Def* emit_decl(Emitter&, const Def* /*type*/) const { fe::unreachable(); }
-    virtual void emit_body(Emitter&, const Def* /*decl*/) const { fe::unreachable(); }
+    virtual const Def* emit_decl(Emitter&, const Def* /*type*/) const { std::unreachable(); }
+    virtual void emit_body(Emitter&, const Def* /*decl*/) const { std::unreachable(); }
 
 private:
     virtual const Def* emit_(Emitter&) const = 0;

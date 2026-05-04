@@ -81,7 +81,7 @@ const Def* TuplePtrn::emit_value(Emitter& e, const Def* def) const {
  * Ptrn::emit_Type
  */
 
-const Def* ErrorPtrn::emit_type(Emitter&) const { fe::unreachable(); }
+const Def* ErrorPtrn::emit_type(Emitter&) const { std::unreachable(); }
 
 const Def* IdPtrn::emit_type(Emitter& e) const {
     auto _ = e.world().push(loc());
@@ -132,7 +132,7 @@ const Def* Expr::emit(Emitter& e) const {
     return emit_(e);
 }
 
-const Def* ErrorExpr::emit_(Emitter&) const { fe::unreachable(); }
+const Def* ErrorExpr::emit_(Emitter&) const { std::unreachable(); }
 const Def* HoleExpr::emit_(Emitter& e) const { return e.world().mut_hole_type(); }
 
 const Def* IdExpr::emit_(Emitter&) const {
@@ -171,7 +171,7 @@ const Def* PrimaryExpr ::emit_(Emitter& e) const {
         case Tag::K_I64:  return e.world().type_i64();
         case Tag::T_star: return e.world().type<0>();
         case Tag::T_box:  return e.world().type<1>();
-        default: fe::unreachable();
+        default: std::unreachable();
     }
     // clang-format on
 }
@@ -188,7 +188,7 @@ const Def* LitExpr::emit_(Emitter& e) const {
         case Tag::L_str: return e.world().tuple(tok().sym());
         case Tag::T_bot: return t ? e.world().bot(t) : e.world().type_bot();
         case Tag::T_top: return t ? e.world().top(t) : e.world().type_top();
-        default: fe::unreachable();
+        default: std::unreachable();
     }
     // clang-format on
 }

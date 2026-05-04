@@ -65,7 +65,7 @@ const Def* Rewriter::rewrite_imm(const Def* old_def) {
     const Def* new_def;
     switch (old_def->node()) {
         MIM_IMM_NODE(CODE_IMM)
-        default: fe::unreachable();
+        default: std::unreachable();
     }
     return map(old_def, new_def);
 }
@@ -74,7 +74,7 @@ const Def* Rewriter::rewrite_mut(Def* old_mut) {
     const Def* new_def;
     switch (old_mut->node()) {
         MIM_MUT_NODE(CODE_MUT)
-        default: fe::unreachable();
+        default: std::unreachable();
     }
     return new_def;
 }

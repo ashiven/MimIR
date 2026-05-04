@@ -259,7 +259,7 @@ const Def* ClosConv::rewrite(const Def* def, Def2Def& subst) {
             return map(def->rebuild(new_type, new_ops));
     }
 
-    fe::unreachable();
+    std::unreachable();
 }
 
 Def* ClosConv::rewrite_mut(Def* mut, const Def* new_type, Def2Def& subst) {

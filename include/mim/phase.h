@@ -226,7 +226,7 @@ public:
     const auto& repls() const { return repls_; }
 
 private:
-    const Def* replace(const Def*) final { fe::unreachable(); }
+    const Def* replace(const Def*) final { std::unreachable(); }
 
     Repls repls_;
 };

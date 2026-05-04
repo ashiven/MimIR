@@ -44,7 +44,7 @@ public:
     /// Creates a single Tag::Error message.
     Error(Loc loc, const std::string& str)
         : msgs_{
-            {loc, Tag::Error, str}
+              {loc, Tag::Error, str}
     } {}
     ///@}
 
@@ -90,7 +90,7 @@ public:
             case Tag::Error: return o << rang::fg::red     << "error";
             case Tag::Warn:  return o << rang::fg::magenta << "warning";
             case Tag::Note:  return o << rang::fg::green   << "note";
-            default: fe::unreachable();
+            default: std::unreachable();
         }
         // clang-format on
     }

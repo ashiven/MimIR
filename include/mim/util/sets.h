@@ -173,7 +173,7 @@ public:
                             ptr_ = std::bit_cast<uintptr_t>(node);
                         return *this;
                     }
-                    default: fe::unreachable();
+                    default: std::unreachable();
                 }
                 // clang-format on
             }
@@ -200,7 +200,7 @@ public:
                     case Tag::Uniq: return std::bit_cast<D*>(ptr_);
                     case Tag::Data: return *std::bit_cast<D* const*>(ptr_);
                     case Tag::Node: return std::bit_cast<Node*>(ptr_)->def;
-                    default: fe::unreachable();
+                    default: std::unreachable();
                 }
             }
 

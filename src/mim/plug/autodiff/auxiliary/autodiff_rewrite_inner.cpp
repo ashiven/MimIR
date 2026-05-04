@@ -365,7 +365,7 @@ const Def* Eval::augment_(const Def* def, Lam* f, Lam* f_diff) {
     ELOG("did not expect to augment: {} : {}", def, def->type());
     ELOG("node: {}", def->node_name());
     assert(false && "augment not implemented on this def");
-    fe::unreachable();
+    std::unreachable();
 }
 
 } // namespace mim::plug::autodiff

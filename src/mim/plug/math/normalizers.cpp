@@ -25,7 +25,7 @@ Res fold(u64 a) {
         else if constexpr (id == tri::asinh) return asinh(x);
         else if constexpr (id == tri::acosh) return acosh(x);
         else if constexpr (id == tri::atanh) return atanh(x);
-        else fe::unreachable();
+        else std::unreachable();
     } else if constexpr (std::is_same_v<Id, rt>) {
         if constexpr (false) {}
         else if constexpr (id == rt::sq) return std::sqrt(x);
@@ -39,7 +39,7 @@ Res fold(u64 a) {
         else if constexpr (id == exp::log  ) return std::log  (x);
         else if constexpr (id == exp::log2 ) return std::log2 (x);
         else if constexpr (id == exp::log10) return std::log10(x);
-        else fe::unreachable();
+        else std::unreachable();
     } else if constexpr (std::is_same_v<Id, er>) {
         if constexpr (false) {}
         else if constexpr (id == er::f ) return std::erf (x);
@@ -285,7 +285,7 @@ const Def* normalize_arith(const Def* type, const Def* c, const Def* arg) {
                     case arith::sub: return a;  // a - 0 -> a
                     case arith::div: break;
                     case arith::rem: break;
-                    default: fe::unreachable();
+                    default: std::unreachable();
                     // add, mul are commutative, the literal has been normalized to the left
                 }
             }
@@ -423,7 +423,7 @@ const Def* normalize_conv(const Def* dst_t, const Def*, const Def* x) {
             M(32,  1) M(32,  8) M(32, 16) M(32, 32) M(32, 64)
             M(64,  1) M(64,  8) M(64, 16) M(64, 32) M(64, 64)
 
-            else fe::unreachable();
+            else std::unreachable();
             // clang-format on
             return world.lit(d_t, *res);
         }

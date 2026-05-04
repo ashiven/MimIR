@@ -249,7 +249,7 @@ void Lexer::parse_digits(int base /*= 10*/) {
         case 10: while (accept(utf8::isdigit))  {} break;
         case 16: while (accept(utf8::isxdigit)) {} break;
         // clang-format on
-        default: fe::unreachable();
+        default: std::unreachable();
     }
 }
 

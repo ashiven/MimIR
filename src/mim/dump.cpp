@@ -138,7 +138,7 @@ public:
             case Assoc::L: return !is_left();
             case Assoc::N: return false;
         }
-        fe::unreachable();
+        std::unreachable();
     }
 
     friend std::ostream& operator<<(std::ostream&, Dump);
@@ -360,7 +360,7 @@ void Dumper::dump(Def* mut) {
         if (def->isa<Pi>()) return "Pi";
         if (def->isa<Hole>()) return "Hole";
         if (def->isa<Rule>()) return "Rule";
-        fe::unreachable();
+        std::unreachable();
     };
 
     auto mut_op0 = [&](const Def* def) -> std::ostream& {
@@ -370,7 +370,7 @@ void Dumper::dump(Def* mut) {
         if (auto pi = def->isa<Pi>()) return print(os, ", {}", pi->dom());
         if (auto hole = def->isa_mut<Hole>()) return hole->is_set() ? print(os, ", {}", hole->op()) : print(os, ", ??");
         if (auto rule = def->isa<Rule>()) return print(os, "{} => {}", rule->lhs(), rule->rhs());
-        fe::unreachable();
+        std::unreachable();
     };
 
     if (!mut->is_set()) {

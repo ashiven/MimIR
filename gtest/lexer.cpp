@@ -82,7 +82,8 @@ TEST(Lexer, Eof) {
     std::istringstream is("");
 
     Lexer lexer(ast, is);
-    for (int i = 0; i < 10; i++) EXPECT_TRUE(lexer.lex().isa(Tok::Tag::EoF));
+    for (int i = 0; i < 10; i++)
+        EXPECT_TRUE(lexer.lex().isa(Tok::Tag::EoF));
 }
 
 class Real : public testing::TestWithParam<int> {};
@@ -99,7 +100,7 @@ TEST_P(Real, sign) {
             case 0: break;
             case 1: s.insert(0, "+"sv); break;
             case 2: s.insert(0, "-"sv); break;
-            default: fe::unreachable();
+            default: std::unreachable();
         }
 
         std::istringstream is(s);

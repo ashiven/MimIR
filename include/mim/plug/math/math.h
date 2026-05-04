@@ -93,7 +93,7 @@ const Lit* lit_f(World& w, R val) {
     else if constexpr (sizeof(R) == 2) return w.lit(w.annex<F16>(), mim::bitcast<u16>(val));
     else if constexpr (sizeof(R) == 4) return w.lit(w.annex<F32>(), mim::bitcast<u32>(val));
     else if constexpr (sizeof(R) == 8) return w.lit(w.annex<F64>(), mim::bitcast<u64>(val));
-    else fe::unreachable();
+    else std::unreachable();
 }
 
 inline const Lit* lit_f(World& w, nat_t width, mim::f64 val) {

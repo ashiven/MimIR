@@ -106,8 +106,8 @@ UMax::UMax(World& world, Defs ops)
  * rebuild
  */
 
-const Def* Hole   ::rebuild_(World&,   const Def*,   Defs  ) const { fe::unreachable(); }
-const Def* Global ::rebuild_(World&,   const Def*,   Defs  ) const { fe::unreachable(); }
+const Def* Hole   ::rebuild_(World&,   const Def*,   Defs  ) const { std::unreachable(); }
+const Def* Global ::rebuild_(World&,   const Def*,   Defs  ) const { std::unreachable(); }
 const Def* Idx    ::rebuild_(World& w, const Def*  , Defs  ) const { return w.type_idx(); }
 const Def* Nat    ::rebuild_(World& w, const Def*  , Defs  ) const { return w.type_nat(); }
 const Def* Univ   ::rebuild_(World& w, const Def*  , Defs  ) const { return w.univ(); }
@@ -326,7 +326,7 @@ const Def* Def::var_type() {
     if (isa<Hole  >()) return nullptr;
     if (isa<Global>()) return nullptr;
     // clang-format on
-    fe::unreachable();
+    std::unreachable();
 }
 
 Muts Def::local_muts() const {
@@ -468,7 +468,7 @@ std::string_view Def::node_name() const {
     case Node::name: return #name;
         MIM_NODE(CODE)
 #undef CODE
-        default: fe::unreachable();
+        default: std::unreachable();
     }
 }
 
@@ -485,7 +485,7 @@ u32 Def::judge() const noexcept {
     case Node::n: return u32(j);
         MIM_NODE(CODE)
 #undef CODE
-        default: fe::unreachable();
+        default: std::unreachable();
     }
 }
 

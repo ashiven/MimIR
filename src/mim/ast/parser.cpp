@@ -731,7 +731,7 @@ Ptr<LamDecl> Parser::parse_lam_decl() {
         case Tag::K_lam: decl = true ; entity = "function declaration";               break;
         case Tag::K_con: decl = true ; entity = "continuation declaration";           break;
         case Tag::K_fun: decl = true ; entity = "returning continuation declaration"; break;
-        default: fe::unreachable();
+        default: std::unreachable();
     }
     // clang-format on
 
