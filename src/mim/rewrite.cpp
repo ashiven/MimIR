@@ -14,6 +14,31 @@ namespace mim {
  * Rewriter
  */
 
+Rewriter::Rewriter(std::unique_ptr<World>&& ptr)
+    : ptr_(std::move(ptr))
+    , world_(ptr_.get()) {
+    push(); // create root map
+}
+
+Rewriter::Rewriter(World& world)
+    : world_(&world) {
+    push(); // create root map
+}
+
+Rewriter::~Rewriter() = default;
+
+void Rewriter::reset(std::unique_ptr<World>&& ptr) {
+    ptr_   = std::move(ptr);
+    world_ = ptr_.get();
+    reset();
+}
+
+void Rewriter::reset() {
+    pop();
+    assert(old2news_.empty());
+    push();
+}
+
 const Def* Rewriter::map(const Def* old_def, Defs new_defs) {
     return old2news_.back()[old_def] = world().tuple(new_defs);
 }
