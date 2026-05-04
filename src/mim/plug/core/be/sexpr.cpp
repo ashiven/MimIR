@@ -305,9 +305,10 @@ bool Emitter::is_reachable(Lam* target_lam, Lam* curr_lam, std::set<Lam*>& visit
 }
 
 bool Emitter::is_recursive(Lam* lam) {
-    std::set<Lam*> visited;
     for (auto next_lam : next_lams(lam)) {
         if (next_lam == lam) return true;
+
+        std::set<Lam*> visited;
         if (is_reachable(lam, next_lam, visited)) return true;
     }
 
@@ -325,7 +326,7 @@ void Emitter::emit_lam(Lam* lam, LamSet& rec_lams) {
 
     ++tab;
     // Keeps count of parentheses opened by let-bindings that need to be closed later on
-    size_t unclosed_parens = 0;
+    int unclosed_parens = 0;
     for (auto next_lam : next_lams(lam)) {
         if (!rec_lams.contains(next_lam)) {
             emit_lam(next_lam, rec_lams);
@@ -718,12 +719,6 @@ std::string Emitter::emit_bb(BB& bb, const Def* def) {
                 tab.lnprint(os, "(lit {} {})", lit->get(), emit_type(bb, lit->type()));
         else
             tab.lnprint(os, "(lit {} {})", lit->get(), emit_type(bb, lit->type()));
-
-    } else if (auto tuple = def->isa<Tuple>()) {
-        print(os, "{}", emit_node(bb, tuple, "tuple", true));
-
-    } else if (auto pack = def->isa<Pack>()) {
-        print(os, "{}", emit_node(bb, pack, "pack"));
 
     } else if (auto tuple = def->isa<Tuple>()) {
         print(os, "{}", emit_node(bb, tuple, "tuple", true));
