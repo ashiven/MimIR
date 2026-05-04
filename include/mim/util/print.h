@@ -148,7 +148,7 @@ std::ostream& print(std::ostream& os, const char* s, T&& t, Args&&... args) {
                 } else if constexpr (std::ranges::range<decltype(t)>) {
                     detail::range(os, t, [&](const auto& x) { os << x; }, spec.c_str());
                 } else {
-                    []<bool flag = false>() { static_assert(flag, "cannot print T t"); }();
+                    static_assert(false, "cannot print T t");
                 }
 
                 ++s; // skip closing brace '}'

@@ -333,15 +333,14 @@ const Def* Lam::check(size_t i, const Def* def) {
         if (auto filter = Checker::assignable(world().type_bool(), def)) return filter;
         throw Error().error(filter()->loc(), "filter '{}' of lambda is of type '{}' but must be of type 'Bool'",
                             filter(), filter()->type());
-    } else if (i == 1) {
-        if (auto body = Checker::assignable(codom(), def)) return body;
-        throw Error()
-            .error(def->loc(), "body of function is not assignable to declared codomain")
-            .note(def->loc(), "body: '{}'", def)
-            .note(def->loc(), "type: '{}'", def->type())
-            .note(codom()->loc(), "codomain: '{}'", codom());
     }
-    fe::unreachable();
+    assert(i == 1);
+    if (auto body = Checker::assignable(codom(), def)) return body;
+    throw Error()
+        .error(def->loc(), "body of function is not assignable to declared codomain")
+        .note(def->loc(), "body: '{}'", def)
+        .note(def->loc(), "type: '{}'", def->type())
+        .note(codom()->loc(), "codomain: '{}'", codom());
 }
 
 const Def* Reform::check() {

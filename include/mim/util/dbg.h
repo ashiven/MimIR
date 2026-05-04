@@ -44,7 +44,7 @@ public:
     /// Creates a single Tag::Error message.
     Error(Loc loc, const std::string& str)
         : msgs_{
-            {loc, Tag::Error, str}
+              {loc, Tag::Error, str}
     } {}
     ///@}
 
