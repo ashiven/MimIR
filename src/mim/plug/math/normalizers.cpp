@@ -231,7 +231,10 @@ template<class Id, Id id, nat_t sw, nat_t dw>
 Res fold(u64 a) {
     using S = std::conditional_t<id == conv::s2f, w2s<sw>, std::conditional_t<id == conv::u2f, w2u<sw>, w2f<sw>>>;
     using D = std::conditional_t<id == conv::f2s, w2s<dw>, std::conditional_t<id == conv::f2u, w2u<dw>, w2f<dw>>>;
-    return D(bitcast<S>(a));
+    if constexpr (std::is_void_v<S> || std::is_void_v<D>)
+        return {};
+    else
+        return D(bitcast<S>(a));
 }
 
 } // namespace
