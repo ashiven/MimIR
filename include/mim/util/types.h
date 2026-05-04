@@ -7,10 +7,8 @@
 #include <ostream>
 #include <type_traits>
 
-#if defined(__has_include)
-#    if __has_include(<stdfloat>)
-#        include <stdfloat>
-#    endif
+#if defined(__STDCPP_FLOAT16_T__)
+#    include <stdfloat>
 #endif
 
 namespace mim {
@@ -50,11 +48,6 @@ using flags_t                       = u64;
 using plugin_t                      = u64;
 using tag_t                         = u8;
 using sub_t                         = u8;
-
-template<class T> inline constexpr bool is_f16 = false;
-#if defined(__STDCPP_FLOAT16_T__)
-template<> inline constexpr bool is_f16<f16> = true;
-#endif
 ///@}
 
 namespace detail {

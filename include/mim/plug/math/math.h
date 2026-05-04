@@ -88,8 +88,9 @@ inline std::optional<nat_t> isa_f(const Def* def) {
 // clang-format off
 template<class R>
 const Lit* lit_f(World& w, R val) {
-    static_assert(std::is_floating_point_v<R> || mim::is_f16<R>);
-    if constexpr (mim::is_f16<R>) return w.lit(w.annex<F16>(), mim::bitcast<u16>(val));
+    static_assert(std::is_floating_point_v<R>);
+    if (false) {}
+    else if constexpr (sizeof(R) == 2) return w.lit(w.annex<F16>(), mim::bitcast<u16>(val));
     else if constexpr (sizeof(R) == 4) return w.lit(w.annex<F32>(), mim::bitcast<u32>(val));
     else if constexpr (sizeof(R) == 8) return w.lit(w.annex<F64>(), mim::bitcast<u64>(val));
     else fe::unreachable();
@@ -98,10 +99,10 @@ const Lit* lit_f(World& w, R val) {
 inline const Lit* lit_f(World& w, nat_t width, mim::f64 val) {
     switch (width) {
 #if defined(__STDCPP_FLOAT16_T__)
-        case 16: assert(mim::f64(mim::f16(mim::f32(val))) == val && "loosing precision"); return lit_f(w, mim::f16(mim::f32(val)));
+        case 16: assert(mim::f64(mim::f16(val)) == val && "loosing precision"); return lit_f(w, mim::f16(val));
 #endif
-        case 32: assert(mim::f64(mim::f32(           (val))) == val && "loosing precision"); return lit_f(w, mim::f32(   (val)));
-        case 64: assert(mim::f64(mim::f64(           (val))) == val && "loosing precision"); return lit_f(w, mim::f64(   (val)));
+        case 32: assert(mim::f64(mim::f32(val)) == val && "loosing precision"); return lit_f(w, mim::f32(val));
+        case 64: assert(mim::f64(mim::f64(val)) == val && "loosing precision"); return lit_f(w, mim::f64(val));
         default: return nullptr;
     }
 }
