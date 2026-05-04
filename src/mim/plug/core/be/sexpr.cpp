@@ -568,7 +568,7 @@ std::string Emitter::emit_type(BB& bb, const Def* type) {
     } else if (type->isa<Univ>()) {
         print(os, "Univ");
     } else if (auto reform = type->isa<Reform>()) {
-        print(os, "(reform {})", emit_type(bb, reform->meta_type()));
+        print(os, "(reform {})", emit_type(bb, reform->dom()));
     } else if (auto join = type->isa<Join>()) {
         if (slotted())
             print(os, "(join {})", emit_cons_type(bb, join->ops()));
@@ -762,9 +762,11 @@ std::string Emitter::emit_bb(BB& bb, const Def* def) {
             tab.lnprint(os, "{}", id(top, true));
         }
 
-    } else if (auto rule = def->isa<Rule>()) {
+    } else if (def->isa_imm<Rule>()) {
+        assert("false" && "TODO no vars in immutable Rule");
+    } else if (auto rule = def->isa_mut<Rule>()) {
         toggle_slots();
-        auto meta_var_val = emit_var(bb, rule->meta_var(), rule->meta_var()->type(), true);
+        auto meta_var_val = emit_var(bb, rule->var(), rule->dom(), true);
         auto lhs_val      = emit_bb(bb, rule->lhs());
         auto rhs_val      = emit_bb(bb, rule->rhs());
         auto guard_val    = emit_bb(bb, rule->guard());
