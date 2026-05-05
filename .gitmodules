@@ -10,16 +10,13 @@
 [submodule "googletest"]
 	path = submodules/googletest
 	url = ../../google/googletest.git
-[submodule "half"]
-	path = submodules/half
-	url = ../../AnyDSL/half.git
 [submodule "lyra"]
 	path = submodules/lyra
 	url = ../../bfgroup/lyra.git
-[submodule "rang"]
-	path = submodules/rang
-	url = ../../leissa/rang.git
-[submodule "external/pybind11"]
+[submodule "submodules/pybind11"]
 	path = submodules/pybind11
 	url = ../../pybind/pybind11
 	branch = stable
+[submodule "lyra"]
+	path = submodules/lyra
+	url = ../../bfgroup/lyra.git

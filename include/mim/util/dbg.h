@@ -1,11 +1,12 @@
 #pragma once
 
 #include <sstream>
+
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
 #include <fe/loc.h>
 #include <fe/sym.h>
-#include <rang.hpp>
+#include <fe/term.h>
 
 #include "mim/util/print.h"
 
@@ -29,8 +30,7 @@ public:
         std::string str;
 
         friend std::ostream& operator<<(std::ostream& os, const Msg& msg) {
-            return print(os, "{}{}: {}: {}{}", rang::fg::yellow, msg.loc, msg.tag, rang::fg::reset, msg.str);
-            return print(os, "{}{}: {}: {}{}", rang::fg::yellow, msg.loc, msg.tag, rang::fg::reset, msg.str);
+            return print(os, "{}{}: {}: {}{}", fe::term::FG::Yellow, msg.loc, msg.tag, fe::term::FG::Reset, msg.str);
         }
     };
 
@@ -81,7 +81,7 @@ public:
     /// @name Handle Errors/Warnings
     ///@{
     void clear();
-    /// If errors occured, claim them and throw; if warnings occured, claim them and report to @p os.
+    /// If errors occurred, claim them and throw; if warnings occurred, claim them and report to @p os.
     void ack(std::ostream& os = std::cerr);
     ///@}
 
@@ -93,9 +93,9 @@ public:
     friend std::ostream& operator<<(std::ostream& o, Tag tag) {
         // clang-format off
         switch (tag) {
-            case Tag::Error: return o << rang::fg::red     << "error";
-            case Tag::Warn:  return o << rang::fg::magenta << "warning";
-            case Tag::Note:  return o << rang::fg::green   << "note";
+            case Tag::Error: return o << fe::term::FG::Red     << "error";
+            case Tag::Warn:  return o << fe::term::FG::Magenta << "warning";
+            case Tag::Note:  return o << fe::term::FG::Green   << "note";
             default: fe::unreachable();
         }
         // clang-format on

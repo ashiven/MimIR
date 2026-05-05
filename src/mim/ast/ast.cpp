@@ -11,6 +11,14 @@ AST::~AST() {
            && "please encounter any errors before destroying this class");
 }
 
+Import::Import(Loc loc, Tok::Tag tag, Dbg dbg, Ptr<Module>&& module)
+    : Node(loc)
+    , dbg_(dbg)
+    , tag_(tag)
+    , module_(std::move(module)) {}
+
+Import::~Import() = default;
+
 AnnexInfo* AST::name2annex(Dbg dbg, sub_t* sub_id) {
     if (!dbg || dbg.sym()[0] != '%') return nullptr;
 
@@ -32,7 +40,7 @@ AnnexInfo* AST::name2annex(Dbg dbg, sub_t* sub_id) {
         plugin_id = *Annex::mangle(plugin_s);
     }
 
-    auto [i, fresh] = sym2annex.emplace(plugin_tag, AnnexInfo{plugin_s, tag_s, plugin_id, (tag_t)sym2annex.size()});
+    auto [i, fresh] = sym2annex.try_emplace(plugin_tag, AnnexInfo{plugin_s, tag_s, plugin_id, (tag_t)sym2annex.size()});
     auto annex      = &i->second;
 
     if (sub_s) {
@@ -154,7 +162,7 @@ void AST::bootstrap(Sym plugin, std::ostream& h) {
     tab.print(h, "\n#endif\n");
 }
 
-void AST::bootstrap_python(Sym plugin, std::ostream& h){
+void AST::bootstrap_python(Sym plugin, std::ostream& h) {
     Tab tab;
     plugin_t plugin_id = *Annex::mangle(plugin);
 
@@ -173,37 +181,32 @@ void AST::bootstrap_python(Sym plugin, std::ostream& h){
 
         flags_t ax_id = plugin_id | (annex.id.tag << 8u);
 
-        if(auto& subs = annex.subs; subs.empty()){
-            tab.print(h,"{} = 0x{x}\n", sym.tag, ax_id);
-        }
-        else{
+        if (auto& subs = annex.subs; subs.empty())
+            tab.print(h, "{} = 0x{x}\n", sym.tag, ax_id);
+        else
             annexes_with_subs.push_back(annex);
-        }
-
     }
     tab.print(h, "\n");
-    if(annexes_with_subs.size() != 0){
-        bootstrap_python_subs(annexes_with_subs, plugin, tab, h);
-    }
+    if (annexes_with_subs.size() != 0) bootstrap_python_subs(annexes_with_subs, plugin, tab, h);
 }
 
-void AST::bootstrap_python_subs(std::vector<mim::ast::AnnexInfo> annexes_with_subs, Sym plugin, Tab& tab, std::ostream& h){
+void AST::bootstrap_python_subs(std::vector<mim::ast::AnnexInfo> annexes_with_subs,
+                                Sym plugin,
+                                Tab& tab,
+                                std::ostream& h) {
     plugin_t plugin_id = *Annex::mangle(plugin);
-    for(const auto& annex : annexes_with_subs){
-
+    for (const auto& annex : annexes_with_subs) {
         flags_t ax_id = plugin_id | (annex.id.tag << 8u);
         tab.print(h, "class {}(IntEnum):\n", annex.sym.tag);
         ++tab;
 
-        for (const auto& sub : annex.subs) {
+        for (const auto& sub : annex.subs)
             tab.print(h, "{} = 0x{x},\n", sub, ax_id++);
-        }
-        
+
         --tab;
         tab.print(h, "\n\n");
     }
 }
-
 
 /*
  * Other
@@ -253,7 +256,7 @@ AST load_plugins(World& world, View<Sym> plugins) {
     auto imports = Ptrs<Import>();
 
     for (auto plugin : plugins)
-        if (auto mod = parser.import(plugin, nullptr))
+        if (auto mod = parser.import(plugin.view(), tag))
             imports.emplace_back(ast.ptr<Import>(mod->loc(), tag, Dbg(plugin), std::move(mod)));
 
     if (!plugins.empty()) {
