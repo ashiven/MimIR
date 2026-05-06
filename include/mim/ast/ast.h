@@ -435,11 +435,11 @@ private:
 /// Reform (type of a rule) `Rule type`.
 class RuleExpr : public Expr {
 public:
-    RuleExpr(Loc loc, Ptr<Expr>&& meta_type)
+    RuleExpr(Loc loc, Ptr<Expr>&& dom)
         : Expr(loc)
-        , meta_type_(std::move(meta_type)) {}
+        , dom_(std::move(dom)) {}
 
-    const Expr* meta_type() const { return meta_type_.get(); }
+    const Expr* dom() const { return dom_.get(); }
 
     void bind(Scopes&) const override;
     std::ostream& stream(Tab&, std::ostream&) const override;
@@ -447,7 +447,7 @@ public:
 private:
     const Def* emit_(Emitter&) const override;
 
-    Ptr<Expr> meta_type_;
+    Ptr<Expr> dom_;
 };
 
 // union
@@ -739,13 +739,13 @@ private:
 /// `«dbg: arity; body»` or `‹dbg: arity; body›`
 class SeqExpr : public Expr {
 public:
-    SeqExpr(Loc loc, bool is_arr, Ptr<IdPtrn>&& arity, Ptr<Expr>&& body)
+    SeqExpr(Loc loc, bool is_pack, Ptr<IdPtrn>&& arity, Ptr<Expr>&& body)
         : Expr(loc)
-        , is_arr_(is_arr)
+        , is_pack_(is_pack)
         , arity_(std::move(arity))
         , body_(std::move(body)) {}
 
-    bool is_arr() const { return is_arr_; }
+    bool is_pack() const { return is_pack_; }
     const IdPtrn* arity() const { return arity_.get(); }
     const Expr* body() const { return body_.get(); }
 
@@ -755,7 +755,7 @@ public:
 private:
     const Def* emit_(Emitter&) const override;
 
-    bool is_arr_;
+    bool is_pack_;
     Ptr<IdPtrn> arity_;
     Ptr<Expr> body_;
 };
@@ -1039,7 +1039,6 @@ private:
 /// rewrite rules
 /// rule (x:T, y:T) : x+y => y+x (when );
 /// all meta variables have to be introduced
-
 class RuleDecl : public ValDecl {
 public:
     RuleDecl(Loc loc, Dbg dbg, Ptr<Ptrn>&& var, Ptr<Expr>&& lhs, Ptr<Expr>&& rhs, Ptr<Expr>&& guard, bool is_normalizer)
@@ -1078,11 +1077,8 @@ private:
 
 class Import : public Node {
 public:
-    Import(Loc loc, Tok::Tag tag, Dbg dbg, Ptr<Module>&& module)
-        : Node(loc)
-        , dbg_(dbg)
-        , tag_(tag)
-        , module_(std::move(module)) {}
+    Import(Loc loc, Tok::Tag tag, Dbg dbg, Ptr<Module>&& module);
+    ~Import();
 
     Dbg dbg() const { return dbg_; }
     Tok::Tag tag() const { return tag_; }

@@ -12,7 +12,7 @@ For subsystem-specific material, see [Plugins](@ref plugins), [Rewriting](@ref r
 If you do not have a [GitHub account set up with SSH](https://docs.github.com/en/authentication/connecting-to-github-with-ssh), you can clone MimIR via HTTPS instead:
 
 ```sh
-git clone --recursive https://github.com/AnyDSL/MimIR.git
+git clone --recursive https://github.com/mimir/mimir.git
 ```
 
 For day-to-day development, a good default is:
@@ -45,10 +45,10 @@ The following CMake switches are available:
 
 ### Dependencies
 
-In addition to the provided [submodules](https://github.com/AnyDSL/MimIR/tree/master/external), you will need:
+In addition to the provided [submodules](https://github.com/mimir/mimir/tree/master/submodules), you will need:
 
 - a recent version of [CMake](https://cmake.org/),
-- a C++20-compatible C++ compiler, and
+- a C++23-compatible C++ compiler, and
 - optionally [LLVM](https://llvm.org/).
 
 Mim emits LLVM IR, but it does _not_ link against LLVM.
@@ -277,7 +277,7 @@ $1 = ...
 To enable it, source `scripts/xdot.gdb` from your `~/.gdbinit`:
 
 ```gdb
-source ~/mim/scripts/xdot.gdb
+source ~/mimir/scripts/xdot.gdb
 ```
 
 Here is the `xdot` GDB command in action:
