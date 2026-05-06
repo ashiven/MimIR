@@ -97,22 +97,11 @@ public:
 
     /// @name Getters
     ///@{
+    World& world() { return Phase::world(); }
     auto& lattice() { return lattice_; }
     const auto& lattice() const { return lattice_; }
     Def* curr_mut() const { return curr_mut_; }
     bool is_bootstrapping() const { return bootstrapping_; }
-    ///@}
-
-    /// @name Rewrite
-    ///@{
-    virtual void rewrite_annex(flags_t, const Def*);
-    virtual void rewrite_external(Def*);
-    Def* rewrite_mut(Def*) override; ///< Keeps old muts/vars.
-    ///@}
-
-    /// @name Getters
-    ///@{
-    World& world() { return Phase::world(); }
     ///@}
 
 protected:
@@ -137,8 +126,14 @@ protected:
         Def* prev_mut_;
     };
 
+    /// @name Rewrite
+    ///@{
     void start() override;
-    Enter enter(Def* new_mut) { return {this, new_mut}; }
+    virtual void rewrite_annex(flags_t, const Def*);
+    virtual void rewrite_external(Def*);
+    Def* rewrite_mut(Def*) override;                      ///< Keeps old muts/vars.
+    Enter enter(Def* new_mut) { return {this, new_mut}; } //< Updates curr_mut() to @p new_mut.
+    ///@}
 
     Def2Def lattice_;
 
