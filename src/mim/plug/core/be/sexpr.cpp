@@ -41,9 +41,7 @@ struct BB {
             if (slotted) {
                 tab.lnprint(os, "(let");
                 ++tab;
-                if (typed) tab.lnprint(os, "(@ {}", type);
                 tab.lnprint(os, "{}", name);
-                if (typed) print(os, ")");
                 tab.lnprint(os, "(scope");
                 ++tab;
                 tab.lnprint(os, s, std::forward<Args&&>(args)...);
@@ -52,9 +50,7 @@ struct BB {
             } else {
                 tab.lnprint(os, "(let");
                 ++tab;
-                if (typed) tab.lnprint(os, "(@ {}", type);
                 tab.lnprint(os, "{}", name);
-                if (typed) print(os, ")");
                 tab.lnprint(os, s, std::forward<Args&&>(args)...);
                 --tab;
             }
@@ -70,18 +66,14 @@ struct BB {
             if (slotted) {
                 tab.lnprint(os, "(let");
                 ++tab;
-                if (typed) tab.lnprint(os, "(@ {}", type);
                 tab.lnprint(os, "{}", name);
-                if (typed) print(os, ")");
                 tab.lnprint(os, "(scope");
                 print_term(tab, os);
                 --tab;
             } else {
                 tab.lnprint(os, "(let");
                 ++tab;
-                if (typed) tab.lnprint(os, "(@ {}", type);
                 tab.lnprint(os, "{}", name);
-                if (typed) print(os, ")");
                 --tab;
                 print_term(tab, os);
             }
@@ -106,6 +98,7 @@ public:
         : Super(world, "sexpr_emitter", ostream) {
         typed_         = typed;
         slotted_       = slotted;
+        types_enabled_ = true;
         slots_enabled_ = true;
         vars_enabled_  = true;
     }
@@ -136,12 +129,18 @@ private:
 
     // Determines whether the symbolic expression should
     // be emitted with type annotations.
-    bool typed() const { return typed_; }
+    bool typed() const { return typed_ && types_enabled_; }
     bool typed_;
+
+    // Temporarily disable type annotations while emitting.
+    // We do not want to annotate values that are emitted as part of
+    // a dependent type (i.e. during calls to emit_bb from emit_type for an array shape)
+    bool toggle_type_annotations() { return types_enabled_ = !types_enabled_; }
+    bool types_enabled_;
 
     // Determines whether the symbolic expression should
     // be emitted in a style that is compatible with slotted-egraphs.
-    bool slotted() const { return slotted_; }
+    bool slotted() const { return slotted_ && slots_enabled_; }
     bool slotted_;
 
     // Temporarily disable slots while emitting.
@@ -164,7 +163,7 @@ private:
 };
 
 std::string Emitter::id(const Def* def, bool is_var_use) const {
-    std::string prefix = slotted() && slots_enabled_ ? "$" : "";
+    std::string prefix = slotted() ? "$" : "";
     std::string id;
 
     // In slotted-egraphs variable-uses need to be explicitly wrapped in a var node i.e. in λx.x (lam $x (var $x))
@@ -398,9 +397,7 @@ std::string Emitter::emit_var(BB& bb, const Def* var, const Def* type, bool meta
     }
 
     else if (slotted()) {
-        if (typed()) tab.lnprint(os, "(@ {}", emit_type(bb, type));
         tab.lnprint(os, "{}", id(var));
-        if (typed()) print(os, ")");
     }
 
     else {
@@ -535,7 +532,9 @@ std::string Emitter::emit_type(BB& bb, const Def* type) {
         } else if (auto top = arr->arity()->isa<Top>()) {
             print(os, "(arr (top {}) {})", emit_type(bb, top->type()), emit_type(bb, arr->body()));
         } else {
+            toggle_type_annotations();
             print(os, "(arr {} {})", flatten(emit_bb(bb, arr->arity())), emit_type(bb, arr->body()));
+            toggle_type_annotations();
         }
     } else if (auto pi = type->isa<Pi>()) {
         if (Pi::isa_cn(pi))
@@ -709,6 +708,14 @@ std::string Emitter::emit_bb(BB& bb, const Def* def) {
     std::ostringstream os;
 
     ++tab;
+    if (def->type()->isa<Type>() || def->type()->isa<Univ>()) {
+        tab.lnprint(os, "{}", emit_type(bb, def));
+        // Short circuit because we probably don't want to type
+        // annotate a type (or do we?)
+        --tab;
+        return os.str();
+    }
+
     if (typed()) tab.lnprint(os, "(@ {}", emit_type(bb, def->type()));
 
     if (auto lam = def->isa<Lam>()) {
@@ -775,17 +782,19 @@ std::string Emitter::emit_bb(BB& bb, const Def* def) {
 
     } else if (auto bot = def->isa<Bot>()) {
         if (bot->sym().empty())
-            tab.lnprint(os, "(bot)");
+            tab.lnprint(os, "(bot {})", emit_type(bb, bot->type()));
         else {
-            bb.assign(tab, slotted(), typed(), id(bot), emit_type(bb, bot->type()), "(bot)");
+            bb.assign(tab, slotted(), typed(), id(bot), emit_type(bb, bot->type()), "(bot {})",
+                      emit_type(bb, bot->type()));
             tab.lnprint(os, "{}", id(bot, true));
         }
 
     } else if (auto top = def->isa<Top>()) {
         if (top->sym().empty())
-            tab.lnprint(os, "(top)");
+            tab.lnprint(os, "(top {})", emit_type(bb, top->type()));
         else {
-            bb.assign(tab, slotted(), typed(), id(top), emit_type(bb, top->type()), "(top)");
+            bb.assign(tab, slotted(), typed(), id(top), emit_type(bb, top->type()), "(top {})",
+                      emit_type(bb, top->type()));
             tab.lnprint(os, "{}", id(top, true));
         }
 
