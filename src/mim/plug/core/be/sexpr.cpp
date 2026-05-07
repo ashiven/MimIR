@@ -314,7 +314,7 @@ void Emitter::emit_lam(Lam* lam, LamSet& rec_lams) {
     for (auto next_lam : next_lams(lam)) {
         if (!rec_lams.contains(next_lam)) {
             emit_lam(next_lam, rec_lams);
-            // A lambda-binding in slotted opens two parentheses, one for the let-node and one for its scope
+            // A lambda-binding in slotted opens two parentheses, one for the 'let' and one for the let 'scope'
             unclosed_parens += slotted() ? 2 : 1;
         }
     }
@@ -333,13 +333,18 @@ void Emitter::emit_lam(Lam* lam, LamSet& rec_lams) {
     print(func_impls_, "{}", closing_parens);
     --tab;
 
+    // Close type annotation '@'
+    if (typed()) print(func_impls_, ")");
+
     if (slotted()) {
         --tab;
         --tab;
         if (as_binding) {
             --tab;
+            // Close 'lam' and lam var 'scope'
             print(func_impls_, "))");
         } else {
+            // Close 'root', 'lam' and lam var 'scope'
             print(func_impls_, ")))\n\n");
         }
 
@@ -380,7 +385,9 @@ std::string Emitter::emit_var(BB& bb, const Def* var, const Def* type, bool meta
     }
 
     else if (slotted()) {
+        if (typed()) tab.lnprint(os, "(@ {}", emit_type(bb, type));
         tab.lnprint(os, "{}", id(var));
+        if (typed()) print(os, ")");
     }
 
     else {
@@ -411,12 +418,14 @@ std::string Emitter::emit_head(BB& bb, Lam* lam, bool as_binding) {
             tab.lnprint(os, "{}", id(lam));
             tab.lnprint(os, "(scope");
             ++tab;
+            if (typed()) tab.lnprint(os, "(@ {}", emit_type(bb, lam->type()));
             tab.lnprint(os, "(lam");
         } else {
             // We toggle slot-printing to emit the lam id without a slot prefix '$'
             toggle_slots();
             print(os, "(root {} {}", ext, id(lam));
             ++tab;
+            if (typed()) tab.lnprint(os, "(@ {}", emit_type(bb, lam->type()));
             tab.lnprint(os, "(lam");
             toggle_slots();
         }
@@ -425,8 +434,10 @@ std::string Emitter::emit_head(BB& bb, Lam* lam, bool as_binding) {
         tab.lnprint(os, "(let");
         ++tab;
         tab.lnprint(os, "{}", id(lam));
+        if (typed()) tab.lnprint(os, "(@ {}", emit_type(bb, lam->type()));
         tab.lnprint(os, "(lam {} {}", ext, id(lam));
     } else {
+        if (typed()) tab.lnprint(os, "(@ {}", emit_type(bb, lam->type()));
         print(os, "(lam {} {}", ext, id(lam));
     }
 
@@ -643,6 +654,8 @@ std::string Emitter::emit_node(BB& bb, const Def* def, std::string node_name, bo
 
         bb.assign(tab, slotted(), id(def), [&](Tab tab, auto& os) {
             ++tab;
+            if (typed()) tab.lnprint(os, "(@ {}", emit_type(bb, def->type()));
+
             tab.lnprint(os, "({}", node_name);
 
             if (slotted() && variadic)
@@ -655,6 +668,8 @@ std::string Emitter::emit_node(BB& bb, const Def* def, std::string node_name, bo
             }
 
             print(os, ")");
+
+            if (typed()) print(os, ")");
             --tab;
         });
         tab.lnprint(os, "{}", id(def, true));
