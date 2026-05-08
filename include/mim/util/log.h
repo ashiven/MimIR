@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ostream>
+#include <print>
 
 #include <fe/term.h>
 
