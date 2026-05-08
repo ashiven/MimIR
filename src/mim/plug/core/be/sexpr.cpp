@@ -723,14 +723,14 @@ std::string Emitter::emit_bb(BB& bb, const Def* def) {
 
     } else if (auto lit = def->isa<Lit>()) {
         if (lit->type()->isa<Nat>())
-            tab.lnprint(os, "(lit {})", lit);
+            tab.lnprint(os, "(lit {} Nat)", lit);
         else if (auto size = Idx::isa(lit->type()))
             if (auto lit_size = Idx::size2bitwidth(size); lit_size && *lit_size == 1)
-                tab.lnprint(os, "(lit {})", lit);
+                tab.lnprint(os, "(lit {} Bool)", lit);
             else
-                tab.lnprint(os, "(lit {})", lit->get());
+                tab.lnprint(os, "(lit {} {})", lit->get(), emit_type(bb, lit->type()));
         else
-            tab.lnprint(os, "(lit {})", lit->get());
+            tab.lnprint(os, "(lit {} {})", lit->get(), emit_type(bb, lit->type()));
 
     } else if (auto tuple = def->isa<Tuple>()) {
         print(os, "{}", emit_node(bb, tuple, "tuple", true));
