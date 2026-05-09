@@ -33,16 +33,20 @@ public:
         , root_(root) {}
 
     void prologue() {
-        (tab_++).println(os_, "digraph {{");
-        tab_.println(os_, "ordering=out;");
-        tab_.println(os_, "splines=ortho;");
-        tab_.println(os_, "newrank=true;");
-        tab_.println(os_, "nodesep=0.6;");
-        tab_.println(os_, "ranksep=1.2;");
-        tab_.println(os_, "node [shape=box,style=filled,fontname=\"monospace\"];");
+        std::println(os_, "{}digraph {{", tab_);
+        ++tab_;
+        std::println(os_, "{}ordering=out;", tab_);
+        std::println(os_, "{}splines=ortho;", tab_);
+        std::println(os_, "{}newrank=true;", tab_);
+        std::println(os_, "{}nodesep=0.6;", tab_);
+        std::println(os_, "{}ranksep=1.2;", tab_);
+        std::println(os_, "{}node [shape=box,style=filled,fontname=\"monospace\"];", tab_);
     }
 
-    void epilogue() { (--tab_).println(os_, "}}"); }
+    void epilogue() {
+        --tab_;
+        std::println(os_, "{}}}", tab_);
+    }
 
     void run(const Def* root, int max) {
         prologue();
@@ -53,7 +57,7 @@ public:
     void recurse(const Def* def, int max) {
         if (max == 0 || !done_.emplace(def).second) return;
 
-        tab_.print(os_, "_{}[", def->gid());
+        std::print(os_, "{}_{}[", tab_, def->gid());
 
         if (def->isa_mut())
             if (def == root_)
@@ -73,15 +77,17 @@ public:
                 auto op = def->op(i);
                 recurse(op, max - 1);
                 if (op->isa<Lit>() || op->isa<Axm>() || def->isa<Var>() || def->isa<Nat>() || def->isa<Idx>())
-                    tab_.println(os_, "_{}:{} -> _{}[color=\"#00000000\",constraint=false];", def->gid(), i, op->gid());
+                    std::println(os_, "{}_{}:{} -> _{}[color=\"#00000000\",constraint=false];", tab_, def->gid(), i,
+                                 op->gid());
                 else
-                    tab_.println(os_, "_{}:{} -> _{};", def->gid(), i, op->gid());
+                    std::println(os_, "{}_{}:{} -> _{};", tab_, def->gid(), i, op->gid());
             }
         }
 
         if (auto t = def->type(); t && types_) {
             recurse(t, max - 1);
-            tab_.println(os_, "_{} -> _{}[color=\"#00000000\",constraint=false,style=dashed];", def->gid(), t->gid());
+            std::println(os_, "{}_{} -> _{}[color=\"#00000000\",constraint=false,style=dashed];", tab_, def->gid(),
+                         t->gid());
         }
     }
 
@@ -198,11 +204,13 @@ void Nest::dot(const char* file) const {
 
 void Nest::dot(std::ostream& os) const {
     auto tab = fe::Tab::spaces();
-    (tab++).println(os, "digraph {{");
-    tab.println(os, "ordering=out;");
-    tab.println(os, "node [shape=box,style=filled];");
+    std::println(os, "{}digraph {{", tab);
+    ++tab;
+    std::println(os, "{}ordering=out;", tab);
+    std::println(os, "{}node [shape=box,style=filled];", tab);
     root()->dot(tab, os);
-    (--tab).println(os, "}}");
+    --tab;
+    std::println(os, "{}}}", tab);
 }
 
 void Nest::Node::dot(fe::Tab tab, std::ostream& os) const {
@@ -217,20 +225,22 @@ void Nest::Node::dot(fe::Tab tab, std::ostream& os) const {
     }
 
     for (auto sibl : sibl_deps())
-        tab.println(os, "\"{}\":s -> \"{}\":s [style=dashed,constraint=false,splines=true]", name(), sibl->name());
+        std::println(os, "{}\"{}\":s -> \"{}\":s [style=dashed,constraint=false,splines=true]", tab, name(),
+                     sibl->name());
 
     auto rec  = is_mutually_recursive() ? "rec*" : (is_directly_recursive() ? "rec" : "");
     auto html = "<b>" + name() + "</b>";
     if (*rec) html += "<br/><i>"s + rec + "</i>";
     html += "<br/><font point-size=\"8\">depth " + std::to_string(loop_depth()) + "</font>";
-    tab.println(os, "\"{}\" [label=<{}>,tooltip=\"{}\"]", name(), html, s);
+    std::println(os, "{}\"{}\" [label=<{}>,tooltip=\"{}\"]", tab, name(), html, s);
     for (auto child : children().nodes()) {
-        tab.println(os, "\"{}\" -> \"{}\" [splines=false]", name(), child->name());
+        std::println(os, "{}\"{}\" -> \"{}\" [splines=false]", tab, name(), child->name());
         child->dot(tab, os);
     }
 
     // Overlay domination between siblings and their parent
-    if (idom()) tab.println(os, "\"{}\" -> \"{}\" [color=red,style=bold,constraint=false]", idom()->name(), name());
+    if (idom())
+        std::println(os, "{}\"{}\" -> \"{}\" [color=red,style=bold,constraint=false]", tab, idom()->name(), name());
 }
 
 } // namespace mim

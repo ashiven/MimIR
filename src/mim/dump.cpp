@@ -407,11 +407,11 @@ void Dumper::dump(Def* mut) {
     };
 
     if (!mut->is_set()) {
-        tab.print(os, "{}: {} = {{ <unset> }};", id(mut), mut->type());
+        std::print(os, "{}{}: {} = {{ <unset> }};", tab, id(mut), mut->type());
         return;
     }
 
-    tab.print(os, "{} {}{}: {}", mut_prefix(mut), external(mut), id(mut), mut->type());
+    std::print(os, "{}{} {}{}: {}", tab, mut_prefix(mut), external(mut), id(mut), mut->type());
     mut_op0(mut);
     if (mut->var()) { // TODO rewrite with dedicated methods
         if (auto e = mut->num_vars(); e != 1) {
@@ -427,13 +427,13 @@ void Dumper::dump(Def* mut) {
             print(os, ", @{}", mut->var()->unique_name());
         }
     }
-    tab.println(os, " = {{");
+    std::println(os, "{} = {{", tab);
     ++tab;
     if (nest) recurse((*nest)[mut]);
     recurse(mut);
-    tab.print(os, "{}\n", fe::Join(mut->ops()));
+    std::println(os, "{}{}", tab, fe::Join(mut->ops()));
     --tab;
-    tab.print(os, "}};\n");
+    std::println(os, "{}}};", tab);
 }
 
 void Dumper::dump_lam(Lam* lam) {
@@ -452,7 +452,7 @@ void Dumper::dump_lam(Lam* lam) {
     auto is_fun = Lam::isa_returning(last);
     auto is_con = Lam::isa_cn(last) && !is_fun;
 
-    tab.print(os, "{} {}{}", is_fun ? "fun" : is_con ? "con" : "lam", external(lam), id(lam));
+    std::print(os, "{}{} {}{}", tab, is_fun ? "fun" : is_con ? "con" : "lam", external(lam), id(lam));
     for (auto* c : currys) {
         os << ' ';
         auto num_doms = c->var() ? c->var()->num_tprojs() : c->type()->dom()->num_tprojs();
@@ -476,18 +476,18 @@ void Dumper::dump_lam(Lam* lam) {
             recurse(curry->filter());
         recurse(last->body(), true);
         if (last->body()->isa_mut())
-            tab.print(os, "{};\n", last->body());
+            std::println(os, "{}{};", tab, last->body());
         else
-            tab.print(os, "{};\n", Dump(last->body()));
+            std::println(os, "{}{};", tab, Dump(last->body()));
     } else {
-        tab.print(os, "<unset>;\n");
+        std::println(os, "{}<unset>;", tab);
     }
     --tab;
-    tab.print(os, "\n");
+    std::println(os, "{}", tab);
 }
 
 void Dumper::dump_let(const Def* def) {
-    tab.print(os, "let {}: {} = {};\n", def->unique_name(), Op(def->type()), Dump(def));
+    std::println(os, "{}let {}: {} = {};", tab, def->unique_name(), Op(def->type()), Dump(def));
 }
 
 void Dumper::recurse(const Nest::Node* node) {
@@ -536,7 +536,7 @@ std::ostream& Def::stream(std::ostream& os, int max) const {
         dumper.muts.push(mut);
     } else {
         dumper.recurse(this);
-        dumper.tab.print(os, "{}\n", Dump(this));
+        std::println(os, "{}{}", dumper.tab, Dump(this));
         --max;
     }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <format>
+#include <print>
 #include <string>
 
 #include <fe/assert.h>

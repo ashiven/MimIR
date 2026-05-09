@@ -38,19 +38,21 @@ struct BB {
             assigned.insert(name);
             auto& os = body().emplace_back();
             if (slotted) {
-                tab.lnprint(os, "(let");
+                std::print(os, "\n{}(let", tab);
                 ++tab;
-                tab.lnprint(os, "{}", name);
-                tab.lnprint(os, "(scope");
+                std::print(os, "\n{}{}", tab, name);
+                std::print(os, "\n{}(scope", tab);
                 ++tab;
-                tab.lnprint(os, s, std::forward<Args>(args)...);
+                std::print(os, "\n{}", tab);
+                std::print(os, s, std::forward<Args>(args)...);
                 --tab;
                 --tab;
             } else {
-                tab.lnprint(os, "(let");
+                std::print(os, "\n{}(let", tab);
                 ++tab;
-                tab.lnprint(os, "{}", name);
-                tab.lnprint(os, s, std::forward<Args>(args)...);
+                std::print(os, "\n{}{}", tab, name);
+                std::print(os, "\n{}", tab);
+                std::print(os, s, std::forward<Args>(args)...);
                 --tab;
             }
         }
@@ -63,16 +65,16 @@ struct BB {
             assigned.insert(name);
             auto& os = body().emplace_back();
             if (slotted) {
-                tab.lnprint(os, "(let");
+                std::print(os, "\n{}(let", tab);
                 ++tab;
-                tab.lnprint(os, "{}", name);
-                tab.lnprint(os, "(scope");
+                std::print(os, "\n{}{}", tab, name);
+                std::print(os, "\n{}(scope", tab);
                 print_term(tab, os);
                 --tab;
             } else {
-                tab.lnprint(os, "(let");
+                std::print(os, "\n{}(let", tab);
                 ++tab;
-                tab.lnprint(os, "{}", name);
+                std::print(os, "\n{}{}", tab, name);
                 --tab;
                 print_term(tab, os);
             }
@@ -244,10 +246,10 @@ void Emitter::emit_imported(Lam* lam) {
     if (slotted()) {
         print(func_decls_, "(root {} {}", ext, id(lam));
         ++tab;
-        tab.lnprint(func_decls_, "(con");
+        std::print(func_decls_, "\n{}(con", tab);
         print(func_decls_, "{}", emit_var(bb, lam->var(), lam->type()->dom()));
         ++tab;
-        tab.lnprint(func_decls_, "(scope nil nil)");
+        std::print(func_decls_, "\n{}(scope nil nil)", tab);
         --tab;
         print(func_decls_, "))\n\n");
         --tab;
@@ -354,17 +356,17 @@ std::string Emitter::emit_var(BB& bb, const Def* var, const Def* type, bool meta
     if (slotted() && meta_var) {
         auto projs = var->projs();
         if (projs.size() == 1 || std::ranges::all_of(projs, [](auto proj) { return proj->sym().empty(); }))
-            tab.lnprint(os, "(cons (metavar {} {}) nil)", id(var), emit_type(bb, type));
+            std::print(os, "\n{}(cons (metavar {} {}) nil)", tab, id(var), emit_type(bb, type));
         else {
             size_t i = 0;
             std::vector<std::string> meta_vars;
             for (auto proj : projs) {
                 std::ostringstream meta_var;
                 ++tab;
-                tab.lnprint(meta_var, "(metavar");
+                std::print(meta_var, "\n{}(metavar", tab);
                 print(meta_var, "{}", emit_bb(bb, proj));
                 ++tab;
-                tab.lnprint(meta_var, "{})", emit_type(bb, type->proj(i++)));
+                std::print(meta_var, "\n{}{})", tab, emit_type(bb, type->proj(i++)));
                 --tab;
                 --tab;
                 meta_vars.push_back(meta_var.str());
@@ -374,21 +376,21 @@ std::string Emitter::emit_var(BB& bb, const Def* var, const Def* type, bool meta
     }
 
     else if (slotted()) {
-        tab.lnprint(os, "{}", emit_type(bb, type));
-        tab.lnprint(os, "{}", id(var));
+        std::print(os, "\n{}{}", tab, emit_type(bb, type));
+        std::print(os, "\n{}{}", tab, id(var));
     }
 
     else {
         auto projs = var->projs();
         if (projs.size() == 1 || std::ranges::all_of(projs, [](auto proj) { return proj->sym().empty(); }))
-            tab.lnprint(os, "(var {} {})", id(var), emit_type(bb, type));
+            std::print(os, "\n{}(var {} {})", tab, id(var), emit_type(bb, type));
         else {
-            tab.lnprint(os, "(var {}", id(var));
+            std::print(os, "\n{}(var {}", tab, id(var));
             size_t i = 0;
             for (auto proj : projs)
                 print(os, "{}", emit_var(bb, proj, type->proj(i++)));
             ++tab;
-            tab.lnprint(os, "{})", emit_type(bb, type));
+            std::print(os, "\n{}{})", tab, emit_type(bb, type));
             --tab;
         }
     }
@@ -407,26 +409,26 @@ std::string Emitter::emit_head(BB& bb, Lam* lam, bool as_binding) {
 
     if (slotted()) {
         if (as_binding) {
-            tab.lnprint(os, "(let");
+            std::print(os, "\n{}(let", tab);
             ++tab;
-            tab.lnprint(os, "{}", id(lam));
-            tab.lnprint(os, "(scope");
+            std::print(os, "\n{}{}", tab, id(lam));
+            std::print(os, "\n{}(scope", tab);
             ++tab;
-            tab.lnprint(os, "({}", lam_kind);
+            std::print(os, "\n{}({}", tab, lam_kind);
         } else {
             // We toggle slot-printing to emit the lam id without a slot prefix '$'
             toggle_slots();
             print(os, "(root {} {}", ext, id(lam));
             ++tab;
-            tab.lnprint(os, "({}", lam_kind);
+            std::print(os, "\n{}({}", tab, lam_kind);
             toggle_slots();
         }
 
     } else if (as_binding) {
-        tab.lnprint(os, "(let");
+        std::print(os, "\n{}(let", tab);
         ++tab;
-        tab.lnprint(os, "{}", id(lam));
-        tab.lnprint(os, "({} {} {}", lam_kind, ext, id(lam));
+        std::print(os, "\n{}{}", tab, id(lam));
+        std::print(os, "\n{}({} {} {}", tab, lam_kind, ext, id(lam));
     } else {
         print(os, "({} {} {}", lam_kind, ext, id(lam));
     }
@@ -435,13 +437,13 @@ std::string Emitter::emit_head(BB& bb, Lam* lam, bool as_binding) {
 
     if (!lam->isa_cn(lam)) {
         ++tab;
-        tab.lnprint(os, "{}", emit_type(bb, lam->type()->codom()));
+        std::print(os, "\n{}{}", tab, emit_type(bb, lam->type()->codom()));
         --tab;
     }
 
     if (slotted()) {
         ++tab;
-        tab.lnprint(os, "(scope");
+        std::print(os, "\n{}(scope", tab);
         // Occasionally a filter will refer to variables that will only
         // start to get bound in the body of the lambda and we therefore
         // disable the use of variables for the duration of emitting the filter
@@ -603,7 +605,7 @@ std::string Emitter::emit_cons(std::vector<std::string> op_vals) {
 
     if (op_vals.size() == 0) {
         ++tab;
-        tab.lnprint(os, "nil");
+        std::print(os, "\n{}nil", tab);
         --tab;
         return os.str();
     }
@@ -611,11 +613,11 @@ std::string Emitter::emit_cons(std::vector<std::string> op_vals) {
     size_t op_idx = 0;
     for (auto op_val : op_vals) {
         ++tab;
-        tab.lnprint(os, "(cons");
+        std::print(os, "\n{}(cons", tab);
         ++tab;
         print(os, "{}", indent(tab.indent(), op_val));
         --tab;
-        if (op_idx == op_vals.size() - 1) tab.lnprint(os, "nil");
+        if (op_idx == op_vals.size() - 1) std::print(os, "\n{}nil", tab);
         --tab;
 
         op_idx++;
@@ -648,7 +650,7 @@ std::string Emitter::emit_node(BB& bb, const Def* def, std::string node_name, bo
 
         bb.assign(tab, slotted(), id(def), [&](fe::Tab tab, auto& os) {
             ++tab;
-            tab.lnprint(os, "({}", node_name);
+            std::print(os, "\n{}({}", tab, node_name);
 
             if (slotted() && variadic)
                 print(os, "{}", emit_cons(op_vals));
@@ -662,12 +664,12 @@ std::string Emitter::emit_node(BB& bb, const Def* def, std::string node_name, bo
             print(os, ")");
             --tab;
         });
-        tab.lnprint(os, "{}", id(def, true));
+        std::print(os, "\n{}{}", tab, id(def, true));
 
     } else {
         // 2) Directly emits the definition of a Def to the lambda tail()
 
-        tab.lnprint(os, "({}", node_name);
+        std::print(os, "\n{}({}", tab, node_name);
 
         if (slotted() && variadic)
             print(os, "{}", emit_cons(op_vals));
@@ -686,21 +688,21 @@ std::string Emitter::emit_bb(BB& bb, const Def* def) {
 
     ++tab;
     if (def->type()->isa<Type>() || def->type()->isa<Univ>()) {
-        tab.lnprint(os, "{}", emit_type(bb, def));
+        std::print(os, "\n{}{}", tab, emit_type(bb, def));
 
     } else if (auto lam = def->isa<Lam>()) {
-        tab.lnprint(os, "{}", id(lam, true));
+        std::print(os, "\n{}{}", tab, id(lam, true));
 
     } else if (auto lit = def->isa<Lit>()) {
         if (lit->type()->isa<Nat>())
-            tab.lnprint(os, "(lit {} Nat)", lit);
+            std::print(os, "\n{}(lit {} Nat)", tab, lit);
         else if (auto size = Idx::isa(lit->type()))
             if (auto lit_size = Idx::size2bitwidth(size); lit_size && *lit_size == 1)
-                tab.lnprint(os, "(lit {} Bool)", lit);
+                std::print(os, "\n{}(lit {} Bool)", tab, lit);
             else
-                tab.lnprint(os, "(lit {} {})", lit->get(), emit_type(bb, lit->type()));
+                std::print(os, "\n{}(lit {} {})", tab, lit->get(), emit_type(bb, lit->type()));
         else
-            tab.lnprint(os, "(lit {} {})", lit->get(), emit_type(bb, lit->type()));
+            std::print(os, "\n{}(lit {} {})", tab, lit->get(), emit_type(bb, lit->type()));
 
     } else if (auto tuple = def->isa<Tuple>()) {
         print(os, "{}", emit_node(bb, tuple, "tuple", true));
@@ -732,7 +734,7 @@ std::string Emitter::emit_bb(BB& bb, const Def* def) {
             }
         }
         if (!slotted() && ((Lit::isa(index) && tuple->isa<Var>()) || is_nested_proj))
-            tab.lnprint(os, "{}", id(extract));
+            std::print(os, "\n{}{}", tab, id(extract));
         else
             print(os, "{}", emit_node(bb, extract, "extract"));
 
@@ -740,30 +742,30 @@ std::string Emitter::emit_bb(BB& bb, const Def* def) {
         print(os, "{}", emit_node(bb, insert, "insert"));
 
     } else if (auto var = def->isa<Var>()) {
-        tab.lnprint(os, "{}", id(var, true));
+        std::print(os, "\n{}{}", tab, id(var, true));
 
     } else if (auto app = def->isa<App>()) {
         print(os, "{}", emit_node(bb, app, "app"));
 
     } else if (auto axm = def->isa<Axm>()) {
-        tab.lnprint(os, "{}", id(axm));
+        std::print(os, "\n{}{}", tab, id(axm));
         if (!world().flags2annex().contains(axm->flags()))
             print(decls_, "(axm {} {})\n\n", id(axm), emit_type(bb, axm->type()));
 
     } else if (auto bot = def->isa<Bot>()) {
         if (bot->sym().empty())
-            tab.lnprint(os, "(bot {})", emit_type(bb, bot->type()));
+            std::print(os, "\n{}(bot {})", tab, emit_type(bb, bot->type()));
         else {
             bb.assign(tab, slotted(), id(bot), "(bot {})", emit_type(bb, bot->type()));
-            tab.lnprint(os, "{}", id(bot, true));
+            std::print(os, "\n{}{}", tab, id(bot, true));
         }
 
     } else if (auto top = def->isa<Top>()) {
         if (top->sym().empty())
-            tab.lnprint(os, "(top {})", emit_type(bb, top->type()));
+            std::print(os, "\n{}(top {})", tab, emit_type(bb, top->type()));
         else {
             bb.assign(tab, slotted(), id(top), "(top {})", emit_type(bb, top->type()));
-            tab.lnprint(os, "{}", id(top, true));
+            std::print(os, "\n{}{}", tab, id(top, true));
         }
 
     } else if (def->isa_imm<Rule>()) {
@@ -775,7 +777,7 @@ std::string Emitter::emit_bb(BB& bb, const Def* def) {
         auto rhs_val      = emit_bb(bb, rule->rhs());
         auto guard_val    = emit_bb(bb, rule->guard());
         toggle_slots();
-        tab.lnprint(os, "{}", id(rule, true));
+        std::print(os, "\n{}{}", tab, id(rule, true));
         print(decls_, "(rule {} {} {} {} {})\n\n", indent(1, id(rule)), indent(1, meta_var_val), indent(1, lhs_val),
               indent(1, rhs_val), indent(1, guard_val));
 
@@ -797,13 +799,13 @@ std::string Emitter::emit_bb(BB& bb, const Def* def) {
             if (auto op_val = emit_bb(bb, op); !op_val.empty()) op_vals.push_back(op_val);
 
         if (proxy->sym().empty()) {
-            tab.lnprint(os, "(proxy");
+            std::print(os, "\n{}(proxy", tab);
             print(os, "{}", type_val);
             // pass_val and tag_val are not emitted via emit_bb and therefore have no
             // leading newlines and indentation levels so we add those here
             ++tab;
-            tab.lnprint(os, "{}", pass_val);
-            tab.lnprint(os, "{}", tag_val);
+            std::print(os, "\n{}{}", tab, pass_val);
+            std::print(os, "\n{}{}", tab, tag_val);
             --tab;
             // TODO: variadic ops as cons for slotted
             for (auto op_val : op_vals)
@@ -812,12 +814,12 @@ std::string Emitter::emit_bb(BB& bb, const Def* def) {
         } else {
             bb.assign(tab, slotted(), id(proxy), [&](fe::Tab tab, auto& os) {
                 ++tab;
-                tab.lnprint(os, "(proxy");
+                std::print(os, "\n{}(proxy", tab);
                 ++tab;
                 print(os, "{}", type_val);
                 ++tab;
-                tab.lnprint(os, "{}", pass_val);
-                tab.lnprint(os, "{}", tag_val);
+                std::print(os, "\n{}{}", tab, pass_val);
+                std::print(os, "\n{}{}", tab, tag_val);
                 --tab;
                 // TODO: variadic ops as cons for slotted
                 for (auto op_val : op_vals)
@@ -826,7 +828,7 @@ std::string Emitter::emit_bb(BB& bb, const Def* def) {
                 print(os, ")");
                 --tab;
             });
-            tab.lnprint(os, "{}", id(proxy, true));
+            std::print(os, "\n{}{}", tab, id(proxy, true));
         }
 
     } else {

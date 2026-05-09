@@ -355,7 +355,7 @@ inline void Emitter::finalize() {
             ++tab;
             for (const auto& part : bb.parts)
                 for (const auto& line : part)
-                    tab.print(func_impls_, "{}\n", line.str());
+                    std::println(func_impls_, "{}{}", tab, line.str());
             --tab;
             func_impls_ << std::endl;
         }
