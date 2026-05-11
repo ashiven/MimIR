@@ -28,3 +28,4 @@ extra/*
 pyrightconfig.json
 mim_py/src/mim_py/mim_enums/
 mim_py/src/mim_py/__init__.pyi
+.zed

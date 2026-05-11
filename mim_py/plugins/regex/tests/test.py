@@ -36,5 +36,5 @@ library = email.jit()
 
 # print(x.regex)
 # print(library.items())
-if(library["match_func"]("joel_schroeder@gmx.de".encode("utf-8"))):
+if(library["match_func"]("test@test.de".encode("utf-8"))):
     print("python package works")

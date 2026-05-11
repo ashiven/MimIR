@@ -1,7 +1,7 @@
 from enum import IntEnum
-from mim_py.mim import * 
+from mim_py.mim import *
 from mim_py.mim import World, Sym, Def # for explicit use below
-from mim_py.regex_plug import regex as r
+from mim_py.mim_enums.regex_plug import regex as r
 from typing import List
 from mim_py.callable import MimCallable
 from mim_py.jit import JIT
@@ -39,4 +39,4 @@ def call(self, *args) -> Def:
             return self.implicit_app(callee, [args[1]])
     raise TypeError("The given arguments dont match the expected types")
 
-World.call = call 
+World.call = call

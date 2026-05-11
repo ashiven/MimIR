@@ -27,4 +27,3 @@ class JIT(ABC):
         so_path = self._compile_so()
         self._lib = cdll.LoadLibrary(so_path)
         return self._lib
-    
