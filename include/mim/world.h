@@ -682,28 +682,6 @@ public:
     ///@}
 
 private:
-    /// @name call_
-    /// Helpers to unwind World::call with variadic templates.
-    ///@{
-    template<bool Normalize = true, class T, class... Args>
-    const Def* call_(const Def* callee, T arg, Args&&... args) {
-        return call_<Normalize>(implicit_app(callee, arg), std::forward<Args>(args)...);
-    }
-    template<bool Normalize = true, class T>
-    const Def* call_(const Def* callee, T arg) {
-        return implicit_app<Normalize>(callee, arg);
-    }
-    // template<bool Normalize = true>
-    // const Def* call_(const Def* callee, Defs args){
-    //     if(args.size()>1){
-    //         return call_<Normalize>(implicit_app(callee, args.subspan(0,1)), args.subspan(1));
-    //     }
-    //     else{
-    //         return implicit_app<Normalize>(callee, args.subspan(0,1));
-    //     }
-    // }
-    ///@}
-
     /// @name Put into Sea of Nodes
     ///@{
     template<class T, class... Args>
