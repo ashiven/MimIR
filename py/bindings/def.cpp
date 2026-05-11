@@ -34,9 +34,11 @@ void init_def(py::module_& m) {
 
             return ret_vec;
         })
-        .def("world", &mim::Def::world, py::return_value_policy::reference_internal)
-        .def("driver", [](mim::Def& d) -> mim::Driver& {
-            return d.world().driver();
+        .def("world", [](mim::Def& d) -> py::object {
+            return py::cast(&d.world(), py::return_value_policy::reference_internal, py::cast(&d));
+        })
+        .def("driver", [](mim::Def& d) -> py::object {
+            return py::cast(&d.world().driver(), py::return_value_policy::reference_internal, py::cast(&d));
         })
         ;
 

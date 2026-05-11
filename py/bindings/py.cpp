@@ -37,11 +37,10 @@ PYBIND11_MODULE(_mim, m) {
     mim::init_pi(m);
 
     mim::init_world(m);
-
+    mim::init_flags(m);
+    mim::init_log(m);
     mim::init_driver(m);
     mim::ast::init_ast(m);
-    mim::init_log(m);
-    mim::init_flags(m);
     mim::ast::init_parser(m);
     // mim::init_app(m);
 
