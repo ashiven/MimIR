@@ -42,7 +42,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}"
 option(BUILD_SHARED_LIBS    "Build shared libraries." ON)
 option(MIM_BUILD_DOCS       "If ON, build the documentation (requires Doxygen)." OFF)
 option(MIM_BUILD_EXAMPLES   "If ON, build examples." OFF)
-option(MIM_BUILD_PYTHON     "If ON, build the mim_py Python package (and any plugins) into a project-root .venv." OFF)
+option(MIM_BUILD_PYTHON     "If ON, build the mim_py Python package (and any plugins) into ${CMAKE_BINARY_DIR}/.venv." OFF)
 
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}; shared libs: ${BUILD_SHARED_LIBS}")
 
@@ -99,22 +99,33 @@ if(MIM_BUILD_DOCS)
 endif()
 
 # Build the `mim_py` Python package (plus any plugins under mim_py/plugins/*)
-# and install them into a project-root .venv. Gated by MIM_BUILD_PYTHON;
+# and install them into the build tree's .venv. Gated by MIM_BUILD_PYTHON;
 # when ON, the `mim_py` umbrella target is part of the default build.
 if(MIM_BUILD_PYTHON)
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
-set(MIM_PY_VENV           "${PROJECT_SOURCE_DIR}/.venv")
+set(MIM_PY_VENV           "${CMAKE_BINARY_DIR}/.venv")
 set(MIM_PY_PYTHON         "${MIM_PY_VENV}/bin/python")
 set(MIM_PY_STAGE          "${CMAKE_BINARY_DIR}/mim_py_stage")
 set(MIM_PY_WHEELS         "${CMAKE_BINARY_DIR}/mim_py_wheels")
 set(MIM_PY_INSTALL_SCRIPT "${PROJECT_SOURCE_DIR}/cmake/MimPyInstallWheel.cmake")
+execute_process(
+    COMMAND "${Python3_EXECUTABLE}" -c
+            "import os, sys; print(os.path.realpath(getattr(sys, '_base_executable', sys.executable) or sys.executable))"
+    OUTPUT_VARIABLE MIM_PY_BOOTSTRAP_PYTHON
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+if(NOT EXISTS "${MIM_PY_BOOTSTRAP_PYTHON}")
+    message(FATAL_ERROR
+        "Could not determine a bootstrap Python interpreter from ${Python3_EXECUTABLE}"
+    )
+endif()
 
 # venv: wiped & recreated on every build
 add_custom_target(mim_py_venv
     COMMAND "${CMAKE_COMMAND}" -E echo "[mim_py] (re)creating venv at ${MIM_PY_VENV}"
     COMMAND "${CMAKE_COMMAND}" -E rm -rf "${MIM_PY_VENV}"
-    COMMAND "${Python3_EXECUTABLE}" -m venv "${MIM_PY_VENV}"
+    COMMAND "${MIM_PY_BOOTSTRAP_PYTHON}" -m venv "${MIM_PY_VENV}"
     COMMAND "${MIM_PY_PYTHON}" -m pip install --upgrade pip
     COMMAND "${MIM_PY_PYTHON}" -m pip install build pybind11-stubgen
     COMMENT "mim_py: (re)creating ${MIM_PY_VENV}"
