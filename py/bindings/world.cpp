@@ -63,10 +63,7 @@ void init_world(py::module_& m) {
                 return w.call(id, mim::Defs(args));
             },
             pybind11::arg("sym"), pybind11::arg("args") = std::vector<mim::Def*>())
-        .def("optimize",
-             [](mim::World& w) {
-                 mim::optimize(w);
-             })
+        .def("optimize", [](mim::World& w) { mim::optimize(w); })
         .def("dot", static_cast<void (World::*)(const char*, bool, bool) const>(&mim::World::dot))
         .def("mut_con", [](mim::World& w, std::vector<Def*> domains) { return w.mut_con(Defs(domains)); })
         .def("annex_by_id", [](mim::World& w, uint64_t id) { return w.annex(id); });

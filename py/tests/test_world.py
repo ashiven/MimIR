@@ -1,4 +1,4 @@
-"""Tests for src/mim/py/world.cpp bindings (no plugins required)."""
+"""Tests for py/bindings/world.cpp bindings (no plugins required)."""
 from __future__ import annotations
 
 import mim_py as mim

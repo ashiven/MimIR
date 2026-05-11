@@ -94,6 +94,5 @@ configure_file(
 )
 set(mim_DIR "${CMAKE_BINARY_DIR}")
 add_subdirectory(plug)
-add_subdirectory(py)
 
 add_dependencies(mim_all libmim)

@@ -15,22 +15,21 @@ void init_lit(py::module_&);
 void register_error(py::module_&);
 } // namespace mim
 
-namespace mim::ast{
-    void init_ast(py::module_&);
-    void init_parser(py::module_&);
-}
+namespace mim::ast {
+void init_ast(py::module_&);
+void init_parser(py::module_&);
+} // namespace mim::ast
 
-
-namespace fe{
+namespace fe {
 void init_sym(py::module_&);
 void init_sym_pool(py::module_&);
-}
+} // namespace fe
 
 PYBIND11_MODULE(mim, m) {
     // Register foundational types first so World's method signatures resolve
     // to Python class names instead of raw C++ spellings ("mim::Lit" -> "Lit").
     // Please consider The ordering for future added Types.
-    mim::init_def(m); 
+    mim::init_def(m);
     mim::init_lit(m);
     fe::init_sym(m);
     fe::init_sym_pool(m);
@@ -47,5 +46,4 @@ PYBIND11_MODULE(mim, m) {
     // mim::init_app(m);
 
     mim::register_error(m);
-
 }

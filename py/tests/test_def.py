@@ -1,4 +1,4 @@
-"""Tests for src/mim/py/def.cpp bindings."""
+"""Tests for py/bindings/def.cpp bindings."""
 from __future__ import annotations
 
 import mim_py as mim

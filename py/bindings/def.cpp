@@ -1,9 +1,11 @@
 #include <pybind11/detail/common.h>
+#include <pybind11/functional.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
-#include <pybind11/functional.h>
+
 #include <mim/def.h>
 #include <mim/world.h>
+
 #include "mim/driver.h"
 
 namespace py = pybind11;
@@ -34,7 +36,7 @@ void init_def(py::module_& m) {
         })
         .def("world", &mim::Def::world, py::return_value_policy::reference_internal)
         .def("driver", [](mim::Def& d) -> mim::Driver& {
-            return d.world().driver(); 
+            return d.world().driver();
         })
         ;
 
@@ -45,9 +47,7 @@ void init_lit(py::module_& m) {
     // clang-format off
     py::class_<mim::Lit, mim::Def>(m, "Lit");
 
-
     // clang-format on
 }
-
 
 } // namespace mim

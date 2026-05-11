@@ -1,23 +1,23 @@
 #include <pybind11/pybind11.h>
-
-#include <mim/lam.h>
-#include <mim/def.h>
 #include <pybind11/stl.h>
+
+#include <mim/def.h>
+#include <mim/lam.h>
 namespace py = pybind11;
 
 namespace mim {
 
-void init_pi(py::module_& m){
+void init_pi(py::module_& m) {
     py::class_<mim::Pi, mim::Def, std::unique_ptr<mim::Pi, py::nodelete>>(m, "Pi");
-        // .def(py::init<>());
+    // .def(py::init<>());
 }
 
 void init_lam(py::module_& m) {
     py::class_<mim::Lam, mim::Def, std::unique_ptr<mim::Lam, py::nodelete>>(m, "Lam")
-        .def("var", static_cast<const mim::Def* (mim::Lam::*)()>(&mim::Def::var), py::return_value_policy::reference_internal)
-        .def("app", [](mim::Lam &l, bool filter, mim::Def* callee, std::vector<mim::Def*> args){
-            return l.app(filter, callee, mim::Defs(args));
-        })
+        .def("var", static_cast<const mim::Def* (mim::Lam::*)()>(&mim::Def::var),
+             py::return_value_policy::reference_internal)
+        .def("app", [](mim::Lam& l, bool filter, mim::Def* callee,
+                       std::vector<mim::Def*> args) { return l.app(filter, callee, mim::Defs(args)); })
         .def("externalize", &mim::Lam::externalize, py::return_value_policy::reference_internal);
 }
 

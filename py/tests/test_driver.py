@@ -1,4 +1,4 @@
-"""Tests for src/mim/py/driver.cpp bindings."""
+"""Tests for py/bindings/driver.cpp bindings."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -6,7 +6,7 @@ from pathlib import Path
 import mim_py as mim
 import pytest
 
-_PLUGIN_DIR = Path(__file__).resolve().parent.parent / "build" / "lib" / "mim"
+_PLUGIN_DIR = Path(__file__).resolve().parents[2] / "build" / "lib" / "mim"
 
 
 def test_driver_default_construct():
