@@ -4,6 +4,7 @@
 #include <pybind11/stl.h>
 
 #include <mim/def.h>
+#include <mim/driver.h>
 #include <mim/world.h>
 
 namespace py = pybind11;
