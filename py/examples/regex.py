@@ -1,8 +1,9 @@
-import mim
-import mim.regex as regex
 from pathlib import Path
 
-repo_root = Path(__file__).resolve().parents[4]
+import mim
+import mim.regex as regex
+
+repo_root = Path(__file__).resolve().parents[2]
 plugin_dir = repo_root / "build" / "lib" / "mim"
 if not plugin_dir.is_dir():
     raise FileNotFoundError(f"expected plugin directory at '{plugin_dir}'")
@@ -34,11 +35,8 @@ subdomain = ((an["*"] + under_hyph["+"] + an)["*"]
 # Top Level Domain (.com, .de, etc...): [a-zA-Z][a-zA-Z]+
 tld = alpha + alpha["+"]
 
-# Zusammengefasster Ausdruck
 email = local + b.lit("@") + domain + b.lit(".") + subdomain + tld
 library = email.jit()
 
-# print(x.regex)
-# print(library.items())
-if(library["match_func"]("test@test.de".encode("utf-8"))):
+if library["match_func"]("test@test.de".encode("utf-8")):
     print("python package works")
