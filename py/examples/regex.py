@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import mim
-import mim.regex as regex
+import mim.plug.regex as regex
 
 repo_root = Path(__file__).resolve().parents[2]
 plugin_dir = repo_root / "build" / "lib" / "mim"
@@ -12,25 +12,18 @@ d = mim.Driver()
 d.add_search_path(plugin_dir)
 b = regex.RegBuilder(d, "regex", mim.Level.Error)
 
-
-alpha = b.range('a', 'z') | b.range('A', 'Z')                # [a-zA-Z]
-under_hyph = b.lit("_") | b.lit("-")                         # [_\-]
-dot_under_hyph = b.lit(".").disj([b.lit("_"), b.lit("-")])   # [._\-]
+alpha = b.range('a', 'z') | b.range('A', 'Z')  # [a-zA-Z]
+under_hyph = b.lit("_") | b.lit("-")  # [_\-]
+dot_under_hyph = b.lit(".").disj([b.lit("_"), b.lit("-")])  # [._\-]
 an = b.alnum()
 # Local: [a-zA-Z0-9](?:[a-zA-Z0-9]*[._\-]+[a-zA-Z0-9])*[a-zA-Z0-9]*
-local = (an
-         + (an["*"] + dot_under_hyph["+"] + an)["*"]
-         + an["*"])
+local = (an + (an["*"] + dot_under_hyph["+"] + an)["*"] + an["*"])
 
 # Domain: [a-zA-Z0-9](?:[a-zA-Z0-9]*[_\-]+[a-zA-Z0-9])*[a-zA-Z0-9]*
-domain = (an
-          + (an["*"] + under_hyph["+"] + an)["*"]
-          + an["*"])
+domain = (an + (an["*"] + under_hyph["+"] + an)["*"] + an["*"])
 
 # Subdomain: (?:(?:[a-zA-Z0-9]*[_\-]+[a-zA-Z0-9])*[a-zA-Z0-9]+\.)*
-subdomain = ((an["*"] + under_hyph["+"] + an)["*"]
-             + an["+"]
-             + b.lit("."))["*"]
+subdomain = ((an["*"] + under_hyph["+"] + an)["*"] + an["+"] + b.lit("."))["*"]
 
 # Top Level Domain (.com, .de, etc...): [a-zA-Z][a-zA-Z]+
 tld = alpha + alpha["+"]

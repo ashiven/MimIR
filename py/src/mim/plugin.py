@@ -4,6 +4,7 @@ from .jit import JIT
 from . import Driver, Level
 from .callable import MimCallable
 
+
 class MimPlugin(ABC):
 
     def __init__(self, driver: Driver, log_level: Level, libname):

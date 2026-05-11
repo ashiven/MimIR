@@ -3,10 +3,11 @@ from __future__ import annotations
 import ctypes
 from typing import List
 
-from . import Def, Driver, Level
-from ._plugins.regex import regex as _regex
+from .. import Def, Driver, Level
+from .._plugins.regex import regex as _regex
 from .core import core
-from .plugin import MimPlugin
+from .mem import mem
+from ..plugin import MimPlugin
 
 regex = _regex
 
@@ -56,35 +57,31 @@ class RegBuilder(MimPlugin):
 
     def build(self):
         function_name = "match_func"
-        self.match_func = self.world.mut_con(
-            [
-                self.world.call("%mem.M", self.world.lit_nat_0()),
-                self.world.call(
-                    "%mem.Ptr0",
-                    [self.world.arr(self.world.top_nat(), self.world.type_i8())],
-                ),
-                self.world.cn(
-                    [
-                        self.world.call("%mem.M", self.world.lit_nat_0()),
-                        self.world.type_bool(),
-                    ]
-                ),
-            ]
-        ).set(function_name)
+        self.match_func = self.world.mut_con([
+            self.world.call(mem.M, self.world.lit_nat_0()),
+            self.world.call(
+                mem.Ptr0,
+                [self.world.arr(self.world.top_nat(), self.world.type_i8())],
+            ),
+            self.world.cn([
+                self.world.call(mem.M, self.world.lit_nat_0()),
+                self.world.type_bool(),
+            ]),
+        ]).set(function_name)
 
         self.match_func.externalize()
-        mem, to_match, exit = self.match_func.var().projs(3)
+        state_mem, to_match, exit = self.match_func.var().projs(3)
 
         regex_mem, matched, pos = self.world.implicit_app(
             self.__final_def,
-            [mem, to_match, self.world.lit(self.world.type_idx(self.world.top_nat()), 0)],
+            [state_mem, to_match, self.world.lit(self.world.type_idx(self.world.top_nat()), 0)],
         ).projs(3)
-        last_elem_ptr = self.world.call("%mem.lea", [to_match, pos])
-        final_mem, last_elem = self.world.call("%mem.load", [regex_mem, last_elem_ptr]).projs(2)
+        last_elem_ptr = self.world.call(mem.lea, [to_match, pos])
+        final_mem, last_elem = self.world.call(mem.load, [regex_mem, last_elem_ptr]).projs(2)
         eq_zero = self.world.call(core.icmp.e, [last_elem, self.world.lit_i8(0)])
 
         matched_and_end = self.world.call(
-            "%core.bit2.and_",
+            core.bit2.and_,
             self.world.lit_nat_0(),
             [matched, eq_zero],
         )

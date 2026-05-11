@@ -5,7 +5,7 @@ import shutil
 from pathlib import Path
 
 import mim
-import mim.regex as regex
+import mim.plug.regex as regex
 import pytest
 
 
@@ -22,7 +22,7 @@ def test_regex_plugin_loads(regex_world):
 def test_regbuilder_jit_match(tmp_path, monkeypatch):
     """End-to-end: build a tiny regex, JIT, run the matcher.
 
-    Uses the public mim.regex API.
+    Uses the public mim.plug.regex API.
     Runs in tmp_path so the generated .ll/.so don't pollute the repo.
     """
     if shutil.which("clang") is None:

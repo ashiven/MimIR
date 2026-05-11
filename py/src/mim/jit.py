@@ -4,6 +4,7 @@ import os
 from ctypes import CDLL, cdll
 from abc import ABC
 
+
 class JIT(ABC):
 
     def __init__(self, so_name: str):

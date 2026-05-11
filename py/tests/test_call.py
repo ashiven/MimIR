@@ -2,7 +2,7 @@
 from __future__ import annotations
 import unittest
 import mim
-import mim.core as core
+import mim.plug.core as core
 
 
 class TestCallFunctions(unittest.TestCase):
@@ -18,19 +18,15 @@ class TestCallFunctions(unittest.TestCase):
         callee = self.world.call(core.bit2.and_)
         assert isinstance(callee, mim.Def)
 
-
     def test_call_with_sym_resolves_annex(self):
         s = self.world.sym("%core.bit2.and_")
         callee = self.world.call(s)
         assert isinstance(callee, mim.Def)
 
-
     def test_call_with_def_passthrough(self):
         nat0 = self.world.lit_nat_0()
         # Per mim/__init__.py:23, a single non-string/Sym arg returns itself.
         assert self.world.call(nat0) is nat0 or isinstance(self.world.call(nat0), mim.Def)
-
-
 
     def test_call_folds_arg_list(self):
         # %core.bit2.and_ with a single Def arg — the folding branch.

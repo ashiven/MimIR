@@ -6,6 +6,7 @@ from .callable import MimCallable
 from .jit import JIT
 from .plugin import MimPlugin
 
+
 def call(self, *args) -> Def:
     callee = args[0]
     if isinstance(args[0], IntEnum):
@@ -36,8 +37,9 @@ def call(self, *args) -> Def:
             return self.implicit_app(callee, [args[1]])
     raise TypeError("The given arguments dont match the expected types")
 
+
 World.call = call
 
-from . import core, regex
+from . import plug
 
-from .regex import MimRegex, RegBuilder
+from .plug.regex import MimRegex, RegBuilder

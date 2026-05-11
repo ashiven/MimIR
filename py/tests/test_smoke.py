@@ -5,18 +5,64 @@ re-exports in mim/__init__.py.
 """
 from __future__ import annotations
 
+import importlib
+
 import mim
 import pytest
 
 EXPECTED_FROM_BINDINGS = [
-    "AST", "Debug", "Def", "Driver", "Error", "Flags", "Info",
-    "Lam", "Level", "Lit", "Log", "MIM_Error", "Parser", "Pi",
-    "PyParser", "Sym", "SymPool", "Verbose", "Warn", "World",
+    "AST",
+    "Debug",
+    "Def",
+    "Driver",
+    "Error",
+    "Flags",
+    "Info",
+    "Lam",
+    "Level",
+    "Lit",
+    "Log",
+    "MIM_Error",
+    "Parser",
+    "Pi",
+    "PyParser",
+    "Sym",
+    "SymPool",
+    "Verbose",
+    "Warn",
+    "World",
 ]
 
 EXPECTED_FROM_WRAPPER = [
-    "MimCallable", "MimPlugin", "MimRegex", "RegBuilder", "JIT", "call",
-    "core", "regex",
+    "MimCallable",
+    "MimPlugin",
+    "MimRegex",
+    "RegBuilder",
+    "JIT",
+    "call",
+    "plug",
+]
+
+EXPECTED_PLUGIN_FACADES = [
+    "affine",
+    "autodiff",
+    "clos",
+    "compile",
+    "core",
+    "demo",
+    "direct",
+    "gpu",
+    "math",
+    "matrix",
+    "mem",
+    "opt",
+    "option",
+    "ord",
+    "refly",
+    "regex",
+    "tensor",
+    "tuple",
+    "vec",
 ]
 
 
@@ -63,5 +109,13 @@ def test_world_call_is_monkey_patched():
 
 
 def test_plugin_facades_delegate_to_generated_plugins():
-    assert mim.core.bit2.and_ is not None
-    assert mim.regex.lit is not None
+    assert mim.plug.core.bit2.and_ is not None
+    assert mim.plug.regex.lit is not None
+
+
+def test_generated_plugin_facades_cover_generated_plugins():
+    for name in EXPECTED_PLUGIN_FACADES:
+        facade = importlib.import_module(f"mim.plug.{name}")
+        generated = importlib.import_module(f"mim._plugins.{name}")
+
+        assert getattr(facade, name) is getattr(generated, name)
