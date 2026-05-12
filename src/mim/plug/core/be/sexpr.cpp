@@ -32,13 +32,8 @@ struct BB {
     }
 
     template<class... Args>
-    std::string assign(fe::Tab tab,
-                       bool slotted,
-                       bool typed,
-                       std::string name,
-                       std::string type,
-                       std::format_string<Args...> s,
-                       Args&&... args) {
+    std::string
+    assign(fe::Tab tab, bool slotted, bool typed, std::string name, std::format_string<Args...> s, Args&&... args) {
         if (!assigned.contains(name)) {
             assigned.insert(name);
             auto& os = body().emplace_back();
@@ -65,7 +60,7 @@ struct BB {
     }
 
     template<class Fn>
-    std::string assign(fe::Tab tab, bool slotted, bool typed, std::string name, std::string type, Fn&& print_term) {
+    std::string assign(fe::Tab tab, bool slotted, bool typed, std::string name, Fn&& print_term) {
         if (!assigned.contains(name)) {
             assigned.insert(name);
             auto& os = body().emplace_back();
@@ -677,7 +672,7 @@ std::string Emitter::emit_node(BB& bb, const Def* def, std::string node_name, bo
         // 1) Emits a let-binding to the lambda body() and then emits the name of the binding in the lambda
         // tail()
 
-        bb.assign(tab, slotted(), typed(), id(def), type_val, [&](fe::Tab tab, auto& os) {
+        bb.assign(tab, slotted(), typed(), id(def), [&](fe::Tab tab, auto& os) {
             ++tab;
             if (typed()) std::print(os, "\n{}(@ {}", tab, type_val);
 
@@ -788,6 +783,13 @@ std::string Emitter::emit_bb(BB& bb, const Def* def) {
         std::print(os, "{}", emit_node(bb, app, "app"));
 
     } else if (auto axm = def->isa<Axm>()) {
+        // TODO: In rebuild_import.mim with annotations we create two let bindings
+        // that shouldn't be created: $n_23003 and $n_22999 (examples/import.slotted).
+        // $n_23003 is used in the annotation of (and therefore created by) %mem.lea.
+        // The same thing is true for $n_22999 (first used in the type of %mem.lea).
+        // - %mem.lea has a type containing arr which calls on emit_bb to create these bindings
+        // - do we maybe toggle off the creation of new bindings while emitting the type annotations
+        //   of axioms since they contain var uses that will create nonsensical bindings?
         std::print(os, "\n{}{}", tab, id(axm));
         if (!world().flags2annex().contains(axm->flags()))
             std::print(decls_, "(axm {} {})\n\n", id(axm), emit_type(bb, axm->type()));
@@ -796,8 +798,7 @@ std::string Emitter::emit_bb(BB& bb, const Def* def) {
         if (bot->sym().empty())
             std::print(os, "\n{}(bot {})", tab, emit_type(bb, bot->type()));
         else {
-            bb.assign(tab, slotted(), typed(), id(bot), emit_type(bb, bot->type()), "(bot {})",
-                      emit_type(bb, bot->type()));
+            bb.assign(tab, slotted(), typed(), id(bot), "(bot {})", emit_type(bb, bot->type()));
             std::print(os, "\n{}{}", tab, id(bot, true));
         }
 
@@ -805,8 +806,7 @@ std::string Emitter::emit_bb(BB& bb, const Def* def) {
         if (top->sym().empty())
             std::print(os, "\n{}(top {})", tab, emit_type(bb, top->type()));
         else {
-            bb.assign(tab, slotted(), typed(), id(top), emit_type(bb, top->type()), "(top {})",
-                      emit_type(bb, top->type()));
+            bb.assign(tab, slotted(), typed(), id(top), "(top {})", emit_type(bb, top->type()));
             std::print(os, "\n{}{}", tab, id(top, true));
         }
 
@@ -854,7 +854,7 @@ std::string Emitter::emit_bb(BB& bb, const Def* def) {
                 std::print(os, "{}", op_val);
             std::print(os, ")");
         } else {
-            bb.assign(tab, slotted(), typed(), id(proxy), emit_type(bb, proxy), [&](fe::Tab tab, auto& os) {
+            bb.assign(tab, slotted(), typed(), id(proxy), [&](fe::Tab tab, auto& os) {
                 ++tab;
                 std::print(os, "\n{}(proxy", tab);
                 ++tab;
