@@ -1,5 +1,6 @@
 #pragma once
 
+#include <sstream>
 #include <stdexcept>
 
 #include <absl/container/flat_hash_map.h>
@@ -87,8 +88,12 @@ public:
     ///@}
 
     const char* what() const noexcept override {
-        std::cerr << *this << std::endl;
-        return "MimIR type error";
+        if (what_.empty()) {
+            std::ostringstream oss;
+            oss << *this;
+            what_ = oss.str();
+        }
+        return what_.c_str();
     }
 
     friend std::ostream& operator<<(std::ostream& o, Tag tag) {
@@ -123,6 +128,7 @@ private:
     size_t num_errors_   = 0;
     size_t num_warnings_ = 0;
     size_t num_notes_    = 0;
+    mutable std::string what_;
 };
 
 /// @name Formatted Output
