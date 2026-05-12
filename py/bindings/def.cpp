@@ -19,6 +19,15 @@ void init_def(py::module_& m) {
         .def("var",  py::overload_cast<            >(&mim::Def::var             ), py::return_value_policy::reference_internal)
         .def("proj", py::overload_cast<nat_t, nat_t>(&mim::Def::proj, py::const_), py::return_value_policy::reference_internal)
         .def("proj", py::overload_cast<       nat_t>(&mim::Def::proj, py::const_), py::return_value_policy::reference_internal)
+        .def("__getitem__", [](const mim::Def& d, py::object index) {
+            if (py::isinstance<py::int_>(index)) return d.proj(index.cast<nat_t>());
+            if (py::isinstance<py::tuple>(index)) {
+                auto tuple = index.cast<py::tuple>();
+                if (tuple.size() == 2) return d.proj(tuple[0].cast<nat_t>(), tuple[1].cast<nat_t>());
+                throw py::index_error("tuple index must be (arity, index)");
+            }
+            throw py::index_error("index must be int or (arity, index)");
+        }, py::return_value_policy::reference_internal)
         .def("dump", py::overload_cast<            >(&mim::Def::dump, py::const_), py::return_value_policy::reference_internal)
         .def("externalize", &mim::Def::externalize)
         .def("set", static_cast<mim::Def* (mim::Def::*)(std::string)>(&mim::Def::set), py::return_value_policy::reference_internal)

@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from enum import IntEnum
 from functools import wraps
 import sys
-from typing import IO, ParamSpec, TypeVar
+from typing import IO, ParamSpec, TypeVar, TypeAlias
 
 from ._mim import *
 from ._mim import Def, Sym, World
@@ -58,7 +58,10 @@ def catch_mim_errors(
     return decorator(func)
 
 
-def call(self, callee, *args) -> Def:
+CallArg: TypeAlias = Def | list[Def] | tuple[Def, ...]
+
+
+def call(self: World, callee: Def | Sym | str | IntEnum, *args: CallArg) -> Def:
     if isinstance(callee, IntEnum):
         callee = self.annex_by_id(callee.value)
     elif isinstance(callee, str):

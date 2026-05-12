@@ -43,6 +43,16 @@ def test_proj_two_args(world):
     assert isinstance(m.var().proj(2, 0), mim.Def)
 
 
+def test_getitem_single_arg(world):
+    m = world.mut_con([world.type_bool(), world.type_i8()])
+    assert isinstance(m.var()[0], mim.Def)
+
+
+def test_getitem_tuple_arg(world):
+    m = world.mut_con([world.type_bool(), world.type_i8()])
+    assert isinstance(m.var()[2, 0], mim.Def)
+
+
 def test_driver_via_def(driver):
     d = driver.world().lit_i8(0).driver()
     assert d is not None

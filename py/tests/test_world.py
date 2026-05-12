@@ -12,6 +12,19 @@ def test_lit_nat_0(world):
     assert isinstance(world.lit_nat_0(), mim.Def)
 
 
+def test_lit_bool(world):
+    assert isinstance(world.lit_bool(True), mim.Def)
+    assert isinstance(world.lit_bool(False), mim.Def)
+
+
+def test_lit_ff(world):
+    assert isinstance(world.lit_ff(), mim.Def)
+
+
+def test_lit_tt(world):
+    assert isinstance(world.lit_tt(), mim.Def)
+
+
 def test_top_nat(world):
     assert isinstance(world.top_nat(), mim.Def)
 

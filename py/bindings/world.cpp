@@ -22,6 +22,9 @@ void init_world(py::module_& m) {
         .def("type_bool", &mim::World::type_bool, py::return_value_policy::reference_internal)
         .def("type_i8", &mim::World::type_i8, py::return_value_policy::reference_internal)
         .def("lit_nat_0", &mim::World::lit_nat_0, py::return_value_policy::reference_internal)
+        .def("lit_bool", &mim::World::lit_bool, py::return_value_policy::reference_internal)
+        .def("lit_ff", &mim::World::lit_ff, py::return_value_policy::reference_internal)
+        .def("lit_tt", &mim::World::lit_tt, py::return_value_policy::reference_internal)
         .def("lit", &mim::World::lit, py::return_value_policy::reference_internal)
         .def("type_idx", static_cast<const mim::Def* (World::*)(const mim::Def*)>(&mim::World::type_idx),
              py::return_value_policy::reference_internal)

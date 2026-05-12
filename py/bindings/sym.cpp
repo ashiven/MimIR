@@ -8,7 +8,7 @@ namespace py = pybind11;
 namespace fe {
 
 void init_sym(py::module_& m) {
-    py::class_<fe::Sym, std::unique_ptr<fe::Sym, py::nodelete>>(m, "Sym")
+    py::class_<fe::Sym>(m, "Sym")
         .def(py::init<>())
         .def("empty", &fe::Sym::empty)
         .def("size", &fe::Sym::size)
