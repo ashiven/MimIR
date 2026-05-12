@@ -1,6 +1,7 @@
 import platform as pf
 import subprocess
 import os
+import tempfile
 from ctypes import CDLL, cdll
 from abc import ABC
 
@@ -11,10 +12,15 @@ class JIT(ABC):
         self.so_name = so_name
         self.ll_name = so_name + ".ll"
         self._lib = None
+        self._so_dir = None
 
     def _get_so_path(self) -> str:
-        ext = ".dll" if pf.system() == "Windows" else ".so"
-        return os.path.join(".", self.so_name + ext)
+        if pf.system() == "Windows":
+            if self._so_dir is None:
+                self._so_dir = tempfile.mkdtemp(prefix=f"{self.so_name}-")
+            return os.path.join(self._so_dir, self.so_name + ".dll")
+
+        return os.path.join(".", self.so_name + ".so")
 
     def _compile_so(self):
         so_path = self._get_so_path()
