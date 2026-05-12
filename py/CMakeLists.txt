@@ -142,22 +142,26 @@ add_dependencies(mim_py mim_py_main ${_mim_py_plugin_targets})
 set(_mim_py_test_command
     COMMAND "${MIM_PY_PYTHON}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/run_tests.py"
 )
+
 if(WIN32)
-    set(_mim_py_test_command
-        COMMAND "${CMAKE_COMMAND}" -E env
-                "PATH=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}\;${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}/mim\;$ENV{PATH}"
-                "${MIM_PY_PYTHON}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/run_tests.py"
+    add_custom_target(test-py
+        COMMAND cmd /c
+                "set \"PATH=${CMAKE_RUNTIME_OUTPUT_DIRECTORY};${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}/mim;%PATH%\" && \"${MIM_PY_PYTHON}\" \"${CMAKE_CURRENT_SOURCE_DIR}/tests/run_tests.py\""
+        DEPENDS mim_py_main
+        COMMENT "mim_py: running Python tests"
+        USES_TERMINAL
+        VERBATIM
+    )
+else()
+    add_custom_target(test-py
+        ${_mim_py_test_command}
+        DEPENDS mim_py_main
+        COMMENT "mim_py: running Python tests"
+        COMMAND_EXPAND_LISTS
+        USES_TERMINAL
+        VERBATIM
     )
 endif()
-
-add_custom_target(test-py
-    ${_mim_py_test_command}
-    DEPENDS mim_py_main
-    COMMENT "mim_py: running Python tests"
-    COMMAND_EXPAND_LISTS
-    USES_TERMINAL
-    VERBATIM
-)
 
 if(TARGET test-all)
     add_dependencies(test-all test-py)

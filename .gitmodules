@@ -17,6 +17,3 @@
 	path = submodules/pybind11
 	url = ../../pybind/pybind11
 	branch = stable
-[submodule "lyra"]
-	path = submodules/lyra
-	url = ../../bfgroup/lyra.git
