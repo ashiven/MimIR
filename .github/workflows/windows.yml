@@ -12,7 +12,7 @@ jobs:
     runs-on: windows-2022
     strategy:
       matrix:
-        build-type: [Release] # Debug disabled: link.exe hangs :(
+        build-type: [Debug, Release]
 
     steps:
       - name: Clone recursively
