@@ -145,8 +145,9 @@ set(_mim_py_test_command
 
 if(WIN32)
     add_custom_target(test-py
-        COMMAND cmd /c
-                "set \"PATH=${CMAKE_RUNTIME_OUTPUT_DIRECTORY};${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}/mim;%PATH%\" && \"${MIM_PY_PYTHON}\" \"${CMAKE_CURRENT_SOURCE_DIR}/tests/run_tests.py\""
+        COMMAND "${CMAKE_COMMAND}" -E env
+                "PATH=${CMAKE_RUNTIME_OUTPUT_DIRECTORY};${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}/mim;$ENV{PATH}"
+                "${MIM_PY_PYTHON}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/run_tests.py"
         DEPENDS mim_py_main
         COMMENT "mim_py: running Python tests"
         USES_TERMINAL
