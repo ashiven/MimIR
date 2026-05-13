@@ -515,8 +515,10 @@ std::string Emitter::emit_type(BB& bb, const Def* type) {
                 case 64: return types_[type] = "I64";
                 default: break;
             }
+            std::print(os, "(idx (lit {} Nat))", size);
+        } else {
+            std::print(os, "(idx {})", emit_type(bb, size));
         }
-        std::print(os, "(idx (lit {} Nat))", size);
     } else if (auto lit = type->isa<Lit>()) {
         if (lit->type()->isa<Nat>())
             std::print(os, "(lit {} Nat)", lit);
@@ -542,13 +544,24 @@ std::string Emitter::emit_type(BB& bb, const Def* type) {
             std::print(os, "(arr {} {})", flatten(emit_bb(bb, arr->arity())), emit_type(bb, arr->body()));
             toggle_type_annotations();
             toggle_bindings();
+            // TODO: mut arr that binds a variable
         }
     } else if (auto pi = type->isa<Pi>()) {
-        if (Pi::isa_cn(pi))
-            std::print(os, "(cn {})", emit_type(bb, pi->dom()));
-        else
-            std::print(os, "(pi {} {})", emit_type(bb, pi->dom()), emit_type(bb, pi->codom()));
+        if (slotted()) {
+            if (auto imm_pi = pi->isa_imm<Pi>()) {
+                // We create a dummy binder for immutable Pi types that do not have a var, to be able
+                // to represent both pi types in a unified format in the slotted language definition.
+                std::print(os, "(pi $dummy (scope {} {}))", emit_type(bb, imm_pi->dom()),
+                           emit_type(bb, imm_pi->codom()));
+            } else if (auto mut_pi = pi->isa_mut<Pi>()) {
+                std::print(os, "(pi {} (scope {} {}))", id(mut_pi->var()), emit_type(bb, mut_pi->dom()),
+                           emit_type(bb, mut_pi->codom()));
+            }
+        } else {
+            std::print("(pi {} {})", emit_type(bb, pi->dom()), emit_type(bb, pi->codom()));
+        }
     } else if (auto sigma = type->isa<Sigma>()) {
+        // TODO: mut sigma that binds a variable
         if (slotted())
             std::print(os, "(sigma {})", emit_cons_type(bb, sigma->ops()));
         else
