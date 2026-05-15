@@ -9,6 +9,6 @@ pattern = (builder.lit("a") + builder.lit("b") + builder.lit("c"))["+"]
 library = pattern.jit()
 matcher = library["match_func"]
 
-print(matcher(b"abc"))
-print(matcher(b"abcabc"))
-print(matcher(b"xyz"))
+print(matcher(b"abc"))    # True
+print(matcher(b"abcabc")) # True
+print(matcher(b"xyz"))    # False
