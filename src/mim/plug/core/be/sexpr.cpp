@@ -112,6 +112,7 @@ public:
 
     using LamSet = std::set<Lam*>;
     LamSet next_lams(Lam* lam);
+    bool isa_nested_proj(const Extract* extract);
 
     void emit_lam(Lam* lam, LamSet& rec_lams);
     std::string emit_var(BB& bb, const Def* var, const Def* type, bool meta_var = false);
@@ -309,6 +310,32 @@ std::set<Lam*> Emitter::next_lams(Lam* lam) {
             }
     }
     return next_lams;
+}
+
+bool Emitter::isa_nested_proj(const Extract* extract) {
+    // 'tuple' is another extract if we have for example two nested, sigma-typed variables
+    // and we are trying to print a named projection of the inner variable. ('baz' in the example below)
+    // ex.:  (var foo (sigma (var bar (sigma (var baz Nat)))))
+    // In this example, we have an extract where the tuple: 'bar' is another extract from 'foo'.
+    auto tuple           = extract->tuple();
+    auto index           = extract->index();
+    auto isa_nested_proj = false;
+    if (tuple->isa<Extract>() && Lit::isa(index)) {
+        auto curr_tuple = tuple;
+        auto curr_index = index;
+        while (curr_tuple && curr_index) {
+            if (curr_tuple->isa<Extract>() && Lit::isa(curr_index)) {
+                auto extract = curr_tuple->as<Extract>();
+                curr_tuple   = extract->tuple();
+                curr_index   = extract->index();
+                continue;
+            } else if (curr_tuple->isa<Var>() && Lit::isa(curr_index)) {
+                isa_nested_proj = true;
+            }
+            break;
+        }
+    }
+    return isa_nested_proj;
 }
 
 void Emitter::emit_lam(Lam* lam, LamSet& rec_lams) {
@@ -532,29 +559,34 @@ std::string Emitter::emit_type(BB& bb, const Def* type) {
         else
             std::print(os, "(lit {} {})", lit->get(), emit_type(bb, lit->type()));
     } else if (auto arr = type->isa<Arr>()) {
-        // We disable type annotations and the creation of new bindings
-        // to prevent the array shape term from creating bindings in the lambda body
-        // which it can't access and we also don't want type annotations inside of types.
-        toggle_type_annotations();
-        toggle_bindings();
-        if (slotted()) {
-            if (auto imm_arr = arr->isa_imm<Arr>()) {
-                std::print(os, "(arr $dummy (scope {} {}))", flatten(emit_bb(bb, imm_arr->arity())),
-                           emit_type(bb, imm_arr->body()));
-            } else if (auto mut_arr = arr->isa_mut<Arr>()) {
-                std::print(os, "(arr {} (scope {} {}))", id(mut_arr->var()), flatten(emit_bb(bb, mut_arr->arity())),
-                           emit_type(bb, mut_arr->body()));
-            }
+        std::string arity_val;
+        if (auto top = arr->arity()->isa<Top>()) {
+            arity_val = "(top " + emit_type(bb, top->type()) + ")";
         } else {
-            std::print(os, "(arr {} {})", flatten(emit_bb(bb, arr->arity())), emit_type(bb, arr->body()));
+            // We disable type annotations and the creation of new bindings
+            // to prevent the array shape term from creating bindings in the lambda body
+            // which it can't access and we also don't want type annotations inside of types.
+            toggle_type_annotations();
+            toggle_bindings();
+            arity_val = flatten(emit_bb(bb, arr->arity()));
+            toggle_type_annotations();
+            toggle_bindings();
         }
-        toggle_type_annotations();
-        toggle_bindings();
+
+        if (slotted()) {
+            if (auto imm_arr = arr->isa_imm<Arr>())
+                std::print(os, "(arr $dummy (scope {} {}))", arity_val, emit_type(bb, imm_arr->body()));
+            else if (auto mut_arr = arr->isa_mut<Arr>())
+                std::print(os, "(arr {} (scope {} {}))", id(mut_arr->var()), arity_val, emit_type(bb, mut_arr->body()));
+        } else {
+            std::print(os, "(arr {} {})", arity_val, emit_type(bb, arr->body()));
+        }
     } else if (auto pi = type->isa<Pi>()) {
         if (slotted()) {
             if (auto imm_pi = pi->isa_imm<Pi>()) {
                 // We create a dummy binder for immutable Pi types that do not have a var, to be able
                 // to represent both pi types in a unified format in the slotted language definition.
+                // The same thing goes for all other mutables that bind a variable.
                 std::print(os, "(pi $dummy (scope {} {}))", emit_type(bb, imm_pi->dom()),
                            emit_type(bb, imm_pi->codom()));
             } else if (auto mut_pi = pi->isa_mut<Pi>()) {
@@ -590,29 +622,10 @@ std::string Emitter::emit_type(BB& bb, const Def* type) {
     } else if (auto hole = type->isa<Hole>()) {
         std::print(os, "(hole {})", id(hole));
     } else if (auto extract = type->isa<Extract>()) {
-        auto tuple = extract->tuple();
-        auto index = extract->index();
-        // See explanation for the same thing in emit_bb
-        auto is_nested_proj = false;
-        if (tuple->isa<Extract>() && Lit::isa(index)) {
-            auto curr_tuple = tuple;
-            auto curr_index = index;
-            while (curr_tuple && curr_index) {
-                if (curr_tuple->isa<Extract>() && Lit::isa(curr_index)) {
-                    auto extract = curr_tuple->as<Extract>();
-                    curr_tuple   = extract->tuple();
-                    curr_index   = extract->index();
-                    continue;
-                } else if (curr_tuple->isa<Var>() && Lit::isa(curr_index)) {
-                    is_nested_proj = true;
-                }
-                break;
-            }
-        }
-        if (!slotted() && ((Lit::isa(index) && tuple->isa<Var>()) || is_nested_proj))
+        if (!slotted() && ((Lit::isa(extract->index()) && extract->tuple()->isa<Var>()) || isa_nested_proj(extract)))
             std::print(os, "{}", id(extract));
         else
-            std::print(os, "(extract {} {})", emit_type(bb, tuple), emit_type(bb, index));
+            std::print(os, "(extract {} {})", emit_type(bb, extract->tuple()), emit_type(bb, extract->index()));
     } else if (auto mType = type->isa<Type>()) {
         std::print(os, "(type {})", emit_type(bb, mType->level()));
     } else if (type->isa<Univ>()) {
@@ -770,29 +783,7 @@ std::string Emitter::emit_bb(BB& bb, const Def* def) {
         std::print(os, "{}", emit_node(bb, pack, "pack"));
 
     } else if (auto extract = def->isa<Extract>()) {
-        auto tuple = extract->tuple();
-        auto index = extract->index();
-        // 'tuple' is another extract if we have for example two nested, sigma-typed variables
-        // and we are trying to print a named projection of the inner variable. ('baz' in the example below)
-        // ex.:  (var foo (sigma (var bar (sigma (var baz Nat)))))
-        // In this example, we have an extract where the tuple: 'bar' is another extract from 'foo'.
-        auto is_nested_proj = false;
-        if (tuple->isa<Extract>() && Lit::isa(index)) {
-            auto curr_tuple = tuple;
-            auto curr_index = index;
-            while (curr_tuple && curr_index) {
-                if (curr_tuple->isa<Extract>() && Lit::isa(curr_index)) {
-                    auto extract = curr_tuple->as<Extract>();
-                    curr_tuple   = extract->tuple();
-                    curr_index   = extract->index();
-                    continue;
-                } else if (curr_tuple->isa<Var>() && Lit::isa(curr_index)) {
-                    is_nested_proj = true;
-                }
-                break;
-            }
-        }
-        if (!slotted() && ((Lit::isa(index) && tuple->isa<Var>()) || is_nested_proj))
+        if (!slotted() && ((Lit::isa(extract->index()) && extract->tuple()->isa<Var>()) || isa_nested_proj(extract)))
             std::print(os, "\n{}{}", tab, id(extract));
         else
             std::print(os, "{}", emit_node(bb, extract, "extract"));
