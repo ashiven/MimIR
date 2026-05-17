@@ -268,7 +268,7 @@ void Emitter::emit_imported(Lam* lam) {
         std::print(func_decls_, "(root {} {}", ext, id(lam));
         ++tab;
         if (typed()) std::print(func_decls_, "\n{}(@ {}", tab, emit_type(bb, lam->type()));
-        std::print(func_decls_, "\n{}(lam", tab);
+        std::print(func_decls_, "\n{}({}", tab, lam_kind);
         std::print(func_decls_, "{}", emit_var(bb, lam->var(), lam->type()->dom()));
         ++tab;
         // Since alpha-equivalent lambdas are all represented in the same eclass in slotted, we need
@@ -421,34 +421,39 @@ std::string Emitter::emit_var(BB& bb, const Def* var, const Def* type, bool meta
     std::ostringstream os;
 
     ++tab;
-    // We assume that the depth of projections for rule meta vars is at most one so
-    // (a: Nat, b: Bool) is okay but (a: [b: Nat]) is not.
-    if (slotted() && meta_var) {
-        toggle_slots();
-        auto projs = var->projs();
-        if (projs.size() == 1 || std::ranges::all_of(projs, [](auto proj) { return proj->sym().empty(); }))
-            std::print(os, "\n{}(cons (metavar {} {}) nil)", tab, id(var), emit_type(bb, type));
-        else {
-            size_t i = 0;
-            std::vector<std::string> meta_vars;
-            for (auto proj : projs) {
-                std::ostringstream meta_var;
-                ++tab;
-                std::print(meta_var, "\n{}(metavar", tab);
-                std::print(meta_var, "{}", emit_bb(bb, proj));
-                ++tab;
-                std::print(meta_var, "\n{}{})", tab, emit_type(bb, type->proj(i++)));
-                --tab;
-                --tab;
-                meta_vars.push_back(meta_var.str());
-            }
-            std::print(os, "{}", emit_cons(meta_vars));
-        }
-        toggle_slots();
-    }
 
-    else if (slotted()) {
-        std::print(os, "\n{}{}", tab, id(var));
+    if (slotted()) {
+        // We assume that the depth of projections for rule meta vars is at most one so
+        // (a: Nat, b: Bool) is okay but (a: [b: Nat]) is not.
+        if (meta_var) {
+            toggle_slots();
+            auto projs = var->projs();
+            if (projs.size() == 1 || std::ranges::all_of(projs, [](auto proj) { return proj->sym().empty(); }))
+                std::print(os, "\n{}(cons (metavar {} {}) nil)", tab, id(var), emit_type(bb, type));
+            else {
+                size_t i = 0;
+                std::vector<std::string> meta_vars;
+                for (auto proj : projs) {
+                    std::ostringstream meta_var;
+                    ++tab;
+                    std::print(meta_var, "\n{}(metavar", tab);
+                    std::print(meta_var, "{}", emit_bb(bb, proj));
+                    ++tab;
+                    std::print(meta_var, "\n{}{})", tab, emit_type(bb, type->proj(i++)));
+                    --tab;
+                    --tab;
+                    meta_vars.push_back(meta_var.str());
+                }
+                std::print(os, "{}", emit_cons(meta_vars));
+            }
+            toggle_slots();
+        } else if (!var) {
+            // We create a dummy binder for mutables whos immutable versions don't have vars
+            // to represent both of them in a unified format in the slotted language definition.
+            std::print(os, "\n{}$dummy", tab);
+        } else {
+            std::print(os, "\n{}{}", tab, id(var));
+        }
     }
 
     else {
@@ -473,7 +478,8 @@ std::string Emitter::emit_var(BB& bb, const Def* var, const Def* type, bool meta
 std::string Emitter::emit_head(BB& bb, Lam* lam, bool as_binding) {
     std::ostringstream os;
 
-    const std::string ext = lam->is_external() ? "extern" : "intern";
+    const std::string lam_kind = Lam::isa_returning(lam) ? "fun" : Lam::isa_cn(lam) ? "con" : "lam";
+    const std::string ext      = lam->is_external() ? "extern" : "intern";
 
     if (slotted()) {
         if (as_binding) {
@@ -483,7 +489,7 @@ std::string Emitter::emit_head(BB& bb, Lam* lam, bool as_binding) {
             std::print(os, "\n{}(scope", tab);
             ++tab;
             if (typed()) std::print(os, "\n{}(@ {}", tab, emit_type(bb, lam->type()));
-            std::print(os, "\n{}(lam", tab);
+            std::print(os, "\n{}({}", tab, lam_kind);
         } else {
             // We toggle slot-printing to emit the lam id without a slot prefix '$'
             toggle_slots();
@@ -491,7 +497,7 @@ std::string Emitter::emit_head(BB& bb, Lam* lam, bool as_binding) {
             toggle_slots();
             ++tab;
             if (typed()) std::print(os, "\n{}(@ {}", tab, emit_type(bb, lam->type()));
-            std::print(os, "\n{}(lam", tab);
+            std::print(os, "\n{}({}", tab, lam_kind);
         }
 
     } else if (as_binding) {
@@ -597,33 +603,35 @@ std::string Emitter::emit_type(BB& bb, const Def* type) {
 
         if (slotted()) {
             if (auto imm_arr = arr->isa_imm<Arr>())
-                std::print(os, "(arr $dummy (scope {} {}))", arity_val, emit_type(bb, imm_arr->body()));
+                std::print(os, "(arr {} (scope {} {}))", emit_var(bb, nullptr, nullptr), arity_val,
+                           emit_type(bb, imm_arr->body()));
             else if (auto mut_arr = arr->isa_mut<Arr>())
-                std::print(os, "(arr {} (scope {} {}))", id(mut_arr->var()), arity_val, emit_type(bb, mut_arr->body()));
+                std::print(os, "(arr {} (scope {} {}))", emit_var(bb, mut_arr->var(), mut_arr->var()->type()),
+                           arity_val, emit_type(bb, mut_arr->body()));
         } else {
             std::print(os, "(arr {} {})", arity_val, emit_type(bb, arr->body()));
         }
     } else if (auto pi = type->isa<Pi>()) {
+        const std::string pi_kind = Pi::isa_returning(pi) ? "fn" : Pi::isa_cn(pi) ? "cn" : "pi";
+        const std::string doms    = (slotted() ? "(scope " : "") + emit_type(bb, pi->dom()) + " "
+                               + emit_type(bb, pi->codom()) + (slotted() ? ")" : "");
+
         if (slotted()) {
-            if (auto imm_pi = pi->isa_imm<Pi>()) {
-                // We create a dummy binder for immutable Pi types that do not have a var, to be able
-                // to represent both pi types in a unified format in the slotted language definition.
-                // The same thing goes for all other mutables that bind a variable.
-                std::print(os, "(pi $dummy (scope {} {}))", emit_type(bb, imm_pi->dom()),
-                           emit_type(bb, imm_pi->codom()));
-            } else if (auto mut_pi = pi->isa_mut<Pi>()) {
-                std::print(os, "(pi {} (scope {} {}))", id(mut_pi->var()), emit_type(bb, mut_pi->dom()),
-                           emit_type(bb, mut_pi->codom()));
-            }
+            if (pi->isa_imm<Pi>())
+                std::print(os, "({} {} {})", pi_kind, emit_var(bb, nullptr, nullptr), doms);
+            else if (auto mut_pi = pi->isa_mut<Pi>())
+                std::print(os, "({} {} {})", pi_kind, emit_var(bb, mut_pi->var(), mut_pi->var()->type()), doms);
         } else {
             std::print(os, "(pi {} {})", emit_type(bb, pi->dom()), emit_type(bb, pi->codom()));
         }
     } else if (auto sigma = type->isa<Sigma>()) {
         if (slotted()) {
             if (auto imm_sigma = sigma->isa_imm<Sigma>())
-                std::print(os, "(sigma $dummy (scope {} nil))", emit_cons_type(bb, imm_sigma->ops()));
+                std::print(os, "(sigma {} (scope {} nil))", emit_var(bb, nullptr, nullptr),
+                           emit_cons_type(bb, imm_sigma->ops()));
             else if (auto mut_sigma = sigma->isa_mut<Sigma>())
-                std::print(os, "(sigma {} (scope {} nil))", id(mut_sigma->var()), emit_cons_type(bb, mut_sigma->ops()));
+                std::print(os, "(sigma {} (scope {} nil))", emit_var(bb, mut_sigma->var(), mut_sigma->var()->type()),
+                           emit_cons_type(bb, mut_sigma->ops()));
         } else
             std::print(os, "(sigma {})",
                        fe::Join(sigma->ops() | std::views::transform([&](auto op) { return emit_type(bb, op); }), " "));
