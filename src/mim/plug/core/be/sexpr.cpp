@@ -607,14 +607,13 @@ std::string Emitter::emit_type(BB& bb, const Def* type) {
             std::print(os, "(arr {} {})", id(mut_arr->var()), scope_wrap(arr_val));
 
     } else if (auto pi = type->isa<Pi>()) {
-        std::string pi_kind = Pi::isa_returning(pi) ? "fn" : Pi::isa_cn(pi) ? "cn" : "pi";
-        std::string doms    = emit_type(bb, pi->dom()) + " " + emit_type(bb, pi->codom());
+        std::string doms = emit_type(bb, pi->dom()) + " " + emit_type(bb, pi->codom());
 
         if (pi->isa_imm<Pi>()) {
             auto dummy_var = slotted() ? "$dummy" : "dummy";
-            std::print(os, "({} {} {})", pi_kind, dummy_var, scope_wrap(doms));
+            std::print(os, "(pi {} {})", dummy_var, scope_wrap(doms));
         } else if (auto mut_pi = pi->isa_mut<Pi>())
-            std::print(os, "({} {} {})", pi_kind, id(mut_pi->var()), scope_wrap(doms));
+            std::print(os, "(pi {} {})", id(mut_pi->var()), scope_wrap(doms));
 
     } else if (auto sigma = type->isa<Sigma>()) {
         std::ostringstream op_vals;
