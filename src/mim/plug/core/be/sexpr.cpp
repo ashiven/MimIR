@@ -719,11 +719,21 @@ std::string Emitter::emit_node(BB& bb, const Def* def, std::string node_name, bo
         if (!type_val.empty()) op_vals.push_back(type_val);
     }
 
-    // This is a bit of an edge case? because the ops of a pack don't contain its arity
-    if (auto pack = def->isa<Pack>())
-        if (auto arity_val = emit_bb(bb, pack->arity()); !arity_val.empty()) op_vals.push_back(arity_val);
+    if (auto pack = def->isa<Pack>()) {
+        ++tab;
+        if (auto var = pack->has_var()) {
+            std::string var_val
+                = std::format("\n{}{}", tab, (slotted() ? id(var) + " (scope" : "(var " + id(var) + " nil)"));
+            op_vals.push_back(var_val);
+        } else {
+            std::string var_val = std::format("\n{}{}", tab, (slotted() ? "$dummy (scope" : "(var dummy nil)"));
+            op_vals.push_back(var_val);
+        }
+        --tab;
 
-    // Same thing here, the ops don't contain pass and tag
+        if (auto arity_val = emit_bb(bb, pack->arity()); !arity_val.empty()) op_vals.push_back(arity_val);
+    }
+
     if (auto proxy = def->isa<Proxy>()) {
         std::ostringstream pass;
         std::ostringstream tag;
@@ -737,13 +747,9 @@ std::string Emitter::emit_node(BB& bb, const Def* def, std::string node_name, bo
         if (auto op_val = emit_bb(bb, op); !op_val.empty()) op_vals.push_back(op_val);
 
     if (!def->sym().empty() && bindings_enabled()) {
-        // 1) Emits a let-binding to the lambda body() and then emits the name of the binding in the lambda
-        // tail()
-
         bb.assign(tab, slotted(), id(def), [&](fe::Tab tab, auto& os) {
             ++tab;
             if (typed()) std::print(os, "\n{}(@ {}", tab, type_val);
-
             std::print(os, "\n{}({}", tab, node_name);
 
             if (slotted() && variadic)
@@ -755,16 +761,16 @@ std::string Emitter::emit_node(BB& bb, const Def* def, std::string node_name, bo
                 --tab;
             }
 
-            std::print(os, ")");
+            // Close the packs' var 'scope'
+            if (slotted() && def->isa<Pack>()) std::print(os, ")");
 
+            std::print(os, ")");
             if (typed()) std::print(os, ")");
             --tab;
         });
         std::print(os, "\n{}{}", tab, id(def, true));
 
     } else {
-        // 2) Directly emits the definition of a Def to the lambda tail()
-
         std::print(os, "\n{}({}", tab, node_name);
 
         if (slotted() && variadic)
@@ -772,6 +778,9 @@ std::string Emitter::emit_node(BB& bb, const Def* def, std::string node_name, bo
         else
             for (auto op_val : op_vals)
                 std::print(os, "{}", op_val);
+
+        // Close the packs' var 'scope'
+        if (slotted() && def->isa<Pack>()) std::print(os, ")");
 
         std::print(os, ")");
     }
