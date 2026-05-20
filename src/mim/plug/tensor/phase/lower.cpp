@@ -115,8 +115,6 @@ const Def* Lower::rec_broadcast(const Def* s_in, const Def* s_out, const Def* in
     w.DLOG("    s_out_ri = {} : {}", s_out_ri, s_out_ri->type());
     w.DLOG("    input = {} : {}", input, input->type());
 
-    input = rewrite(input);
-
     if (i + 1 == r) return input;
 
     if (s_in_ri == s_out_ri) {

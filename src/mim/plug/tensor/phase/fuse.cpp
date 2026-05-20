@@ -33,13 +33,13 @@ namespace mim::plug::tensor::phase {
 const Def* Fuse::fuse_map_reduce(const App* app) {
     auto outer_callee = app->callee()->as<App>();
 
-    auto subs            = outer_callee->arg();
-    auto [comb, init]    = outer_callee->decurry()->args<2>();
-    auto [Tis, Ris, Sis] = outer_callee->decurry()->decurry()->args<3>();
-    auto So              = outer_callee->decurry()->decurry()->decurry()->arg();
-    auto [To, Ro]        = outer_callee->decurry()->decurry()->decurry()->decurry()->args<2>();
-    auto nis             = outer_callee->decurry()->decurry()->decurry()->decurry()->decurry()->arg();
-    auto is              = app->arg();
+    auto subs            = rewrite(outer_callee->arg());
+    auto [comb, init]    = rewrite(outer_callee->decurry()->arg())->projs<2>();
+    auto [Tis, Ris, Sis] = rewrite(outer_callee->decurry()->decurry()->arg())->projs<3>();
+    auto So              = rewrite(outer_callee->decurry()->decurry()->decurry()->arg());
+    auto [To, Ro]        = rewrite(outer_callee->decurry()->decurry()->decurry()->decurry()->arg())->projs<2>();
+    auto nis             = rewrite(outer_callee->decurry()->decurry()->decurry()->decurry()->decurry()->arg());
+    auto is              = rewrite(app->arg());
 
     auto nis_lit = nis->isa<Lit>();
     if (!nis_lit) return nullptr;
@@ -65,7 +65,7 @@ const Def* Fuse::fuse_map_reduce(const App* app) {
     bool any_fusible = false;
 
     for (u64 k = 0; k < nis_nat; ++k) {
-        auto input_k = rewrite(is->proj(nis_nat, k));
+        auto input_k = is->proj(nis_nat, k);
         auto inner   = Axm::isa<tensor::map_reduce>(input_k);
         if (!inner) continue;
 
@@ -151,10 +151,10 @@ const Def* Fuse::fuse_map_reduce(const App* app) {
             const auto& info = infos[i];
             for (u64 l = 0; l < info.nis; ++l) {
                 auto pos         = new_pos[i] + l;
-                new_Tis_vec[pos] = rewrite(info.Tis->proj(info.nis, l));
-                new_Ris_vec[pos] = rewrite(info.Ris->proj(info.nis, l));
-                new_Sis_vec[pos] = rewrite(info.Sis->proj(info.nis, l));
-                new_is_vec[pos]  = rewrite(info.is->proj(info.nis, l));
+                new_Tis_vec[pos] = info.Tis->proj(info.nis, l);
+                new_Ris_vec[pos] = info.Ris->proj(info.nis, l);
+                new_Sis_vec[pos] = info.Sis->proj(info.nis, l);
+                new_is_vec[pos]  = info.is->proj(info.nis, l);
 
                 auto inner_subs_l = info.subs->proj(info.nis, l);
                 DefVec subs_l_vec(info.Ris_nats[l]);
@@ -168,11 +168,11 @@ const Def* Fuse::fuse_map_reduce(const App* app) {
             }
         } else {
             auto pos          = new_pos[i];
-            new_Tis_vec[pos]  = rewrite(Tis->proj(nis_nat, i));
-            new_Ris_vec[pos]  = rewrite(Ris->proj(nis_nat, i));
-            new_Sis_vec[pos]  = rewrite(Sis->proj(nis_nat, i));
-            new_subs_vec[pos] = rewrite(subs->proj(nis_nat, i));
-            new_is_vec[pos]   = rewrite(is->proj(nis_nat, i));
+            new_Tis_vec[pos]  = Tis->proj(nis_nat, i);
+            new_Ris_vec[pos]  = Ris->proj(nis_nat, i);
+            new_Sis_vec[pos]  = Sis->proj(nis_nat, i);
+            new_subs_vec[pos] = subs->proj(nis_nat, i);
+            new_is_vec[pos]   = is->proj(nis_nat, i);
         }
     }
 
@@ -183,12 +183,6 @@ const Def* Fuse::fuse_map_reduce(const App* app) {
     auto new_is   = w.tuple(new_is_vec);
 
     auto new_nis_def = w.lit_nat(new_nis_nat);
-    auto new_To      = rewrite(To);
-    auto new_Ro      = rewrite(Ro);
-    auto new_So      = rewrite(So);
-    auto new_init    = rewrite(init);
-
-    auto new_outer_comb = rewrite(comb);
 
     // Build the fused combination function:
     //
@@ -206,8 +200,8 @@ const Def* Fuse::fuse_map_reduce(const App* app) {
     // corresponding `new_in` slot otherwise. Each `inner_ret_<r>` closes over the prior
     // `value_<j>`s as free variables — those are bound by the dynamic call chain.
     auto inputs_sigma = w.sigma(new_Tis_vec);
-    auto data_sigma   = w.sigma({new_To, inputs_sigma});
-    auto ret_cn_type  = w.cn(new_To);
+    auto data_sigma   = w.sigma({To, inputs_sigma});
+    auto ret_cn_type  = w.cn(To);
     auto new_comb     = w.mut_con({data_sigma, ret_cn_type})->set("fused_comb");
     auto new_data     = new_comb->var(0);
     auto new_ret      = new_comb->var(1);
@@ -221,7 +215,7 @@ const Def* Fuse::fuse_map_reduce(const App* app) {
     Vector<Lam*> inner_rets(fused_indices.size());
     Vector<const Def*> inner_values(fused_indices.size());
     for (size_t r = 0; r < fused_indices.size(); ++r) {
-        auto new_inner_To = rewrite(infos[fused_indices[r]].To);
+        auto new_inner_To = infos[fused_indices[r]].To;
         inner_rets[r]     = w.mut_con(new_inner_To)->set("inner_ret");
         inner_values[r]   = inner_rets[r]->var(0);
     }
@@ -240,8 +234,8 @@ const Def* Fuse::fuse_map_reduce(const App* app) {
     // Chain: caller for fused step r is new_comb (r==0) or inner_rets[r-1] (otherwise).
     for (size_t r = 0; r < fused_indices.size(); ++r) {
         auto k              = fused_indices[r];
-        auto new_inner_comb = rewrite(infos[k].comb);
-        auto new_inner_init = rewrite(infos[k].init);
+        auto new_inner_comb = infos[k].comb;
+        auto new_inner_init = infos[k].init;
 
         DefVec inner_inputs_vec(infos[k].nis);
         for (u64 l = 0; l < infos[k].nis; ++l)
@@ -252,34 +246,27 @@ const Def* Fuse::fuse_map_reduce(const App* app) {
     }
 
     // After every inner combiner has produced its value, call the outer combiner.
-    inner_rets.back()->app(true, new_outer_comb, {w.tuple({new_acc, w.tuple(outer_inputs_vec)}), new_ret});
+    inner_rets.back()->app(true, comb, {w.tuple({new_acc, w.tuple(outer_inputs_vec)}), new_ret});
 
     // Construct the fused map_reduce.
     auto mr = w.annex<tensor::map_reduce>();
     mr      = w.app(mr, new_nis_def);
-    mr      = w.app(mr, {new_To, new_Ro});
-    mr      = w.app(mr, new_So);
+    mr      = w.app(mr, {To, Ro});
+    mr      = w.app(mr, So);
     mr      = w.app(mr, {new_Tis, new_Ris, new_Sis});
-    mr      = w.app(mr, {new_comb, new_init});
+    mr      = w.app(mr, {new_comb, init});
     mr      = w.app(mr, new_subs);
     mr      = w.app(mr, new_is);
 
     return mr;
 }
 
-// A def already in the new world is the result of our own previous rewriting (e.g. a fused
-// map_reduce produced during an iterative re-fuse). Rewriting it again would create an
-// independent duplicate — in particular, walking through one of its Vars would re-rewrite the
-// var's binding mut and create a second copy of an enclosing extern, leaving the original copy
-// with a free var. Short-circuit so iterative fusion can re-enter `fuse_map_reduce` safely.
-const Def* Fuse::rewrite(const Def* d) {
-    if (&d->world() == &new_world()) return d;
-    return Rewriter::rewrite(d);
-}
-
 const Def* Fuse::rewrite_imm_App(const App* app) {
     if (auto mr = Axm::isa<tensor::map_reduce>(app)) {
-        if (auto res = fuse_map_reduce(mr)) return res;
+        if (auto res = fuse_map_reduce(mr)) {
+            new_world().DLOG("Fused map_reduce at {} into a new map_reduce {}", app, res);
+            return res;
+        }
     }
     return Rewriter::rewrite_imm_App(app);
 }
