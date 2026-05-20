@@ -597,23 +597,23 @@ std::string Emitter::emit_type(BB& bb, const Def* type) {
         }
         std::string arr_val = arity_val + " " + emit_type(bb, arr->body());
 
-        if (arr->isa_imm<Arr>()) {
+        if (auto var = arr->has_var()) {
+            auto var_val = slotted() ? id(var) : "(var " + id(var) + " nil)";
+            std::print(os, "(arr {} {})", var_val, scope_wrap(arr_val));
+        } else {
             auto dummy_var = slotted() ? "$dummy" : "(var dummy nil)";
             std::print(os, "(arr {} {})", dummy_var, scope_wrap(arr_val));
-        } else if (auto mut_arr = arr->isa_mut<Arr>()) {
-            auto var = slotted() ? id(mut_arr->var()) : "(var " + id(mut_arr->var()) + " nil)";
-            std::print(os, "(arr {} {})", var, scope_wrap(arr_val));
         }
 
     } else if (auto pi = type->isa<Pi>()) {
         std::string doms = emit_type(bb, pi->dom()) + " " + emit_type(bb, pi->codom());
 
-        if (pi->isa_imm<Pi>()) {
+        if (auto var = pi->has_var()) {
+            auto var_val = slotted() ? id(var) : "(var " + id(var) + " nil)";
+            std::print(os, "(pi {} {})", var_val, scope_wrap(doms));
+        } else {
             auto dummy_var = slotted() ? "$dummy" : "(var dummy nil)";
             std::print(os, "(pi {} {})", dummy_var, scope_wrap(doms));
-        } else if (auto mut_pi = pi->isa_mut<Pi>()) {
-            auto var = slotted() ? id(mut_pi->var()) : "(var " + id(mut_pi->var()) + " nil)";
-            std::print(os, "(pi {} {})", var, scope_wrap(doms));
         }
 
     } else if (auto sigma = type->isa<Sigma>()) {
@@ -622,12 +622,12 @@ std::string Emitter::emit_type(BB& bb, const Def* type) {
                   : op_vals << fe::Join(
                         sigma->ops() | std::views::transform([&](auto op) { return emit_type(bb, op); }), " ");
 
-        if (sigma->isa_imm<Sigma>()) {
+        if (auto var = sigma->has_var()) {
+            auto var_val = slotted() ? id(var) : "(var " + id(var) + " nil)";
+            std::print(os, "(sigma {} {})", var_val, scope_wrap(op_vals.str()));
+        } else {
             auto dummy_var = slotted() ? "$dummy" : "(var dummy nil)";
             std::print(os, "(sigma {} {})", dummy_var, scope_wrap(op_vals.str()));
-        } else if (auto mut_sigma = sigma->isa_mut<Sigma>()) {
-            auto var = slotted() ? id(mut_sigma->var()) : "(var " + id(mut_sigma->var()) + " nil)";
-            std::print(os, "(sigma {} {})", var, scope_wrap(op_vals.str()));
         }
 
     } else if (auto tuple = type->isa<Tuple>()) {
