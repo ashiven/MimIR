@@ -42,10 +42,9 @@ constexpr s64 sext(u64 x) {
 template<nat_t w>
 constexpr bool add_nuw(u64 u, u64 v) {
     static_assert(w >= 1 && w <= 64);
-    u     = trunc<w>(u);
-    v     = trunc<w>(v);
-    u64 r = trunc<w>(u + v);
-    return r < u;
+    u = trunc<w>(u);
+    v = trunc<w>(v);
+    return trunc<w>(u + v) < u;
 }
 
 template<nat_t w>
@@ -89,32 +88,40 @@ constexpr bool mul_nuw(u64 u, u64 v) {
     if (u == 0 || v == 0) return false;
 
     if constexpr (w == 64) {
-        return v > std::numeric_limits<u64>::max() / u; // Check whether u * v would exceed 2^64 - 1.
+        return v > std::numeric_limits<u64>::max() / u;
     } else {
-        constexpr u64 max_val = (w == 64) ? ~u64(0) : (u64(1) << w) - 1;
-        return v > max_val / u; // Check if u * v > max_val. To avoid overflow, compare v > max_val / u.
+        constexpr u64 max_val = (u64(1) << w) - 1;
+        return v > max_val / u;
     }
 }
 
 template<nat_t w>
 constexpr bool mul_nsw(u64 u, u64 v) {
     static_assert(w >= 1 && w <= 64);
-    u     = trunc<w>(u);
-    v     = trunc<w>(v);
-    s64 a = sext<w>(u);
-    s64 b = sext<w>(v);
+    u = trunc<w>(u);
+    v = trunc<w>(v);
+
+    const s64 a = sext<w>(u);
+    const s64 b = sext<w>(v);
 
     if (a == 0 || b == 0) return false;
 
-    // Check overflow using the known limits.
-    s64 min_val = (w == 64) ? std::numeric_limits<s64>::min() : -(s64(1) << (w - 1));
-    s64 max_val = (w == 64) ? std::numeric_limits<s64>::max() : (s64(1) << (w - 1)) - 1;
+    const s64 min_val = w == 64 ? std::numeric_limits<s64>::min() : -(s64(1) << (w - 1));
+    const s64 max_val = w == 64 ? std::numeric_limits<s64>::max() : (s64(1) << (w - 1)) - 1;
 
-    if (a > 0 && b > 0) return a > max_val / b;
-    if (a < 0 && b < 0) return a < max_val / b; // because b negative flips inequality
-    if (a > 0 && b < 0) return b < min_val / a;
-    if (a < 0 && b > 0) return a < min_val / b;
-    return false;
+    // Special cases to avoid UB in division, especially involving min / -1.
+    if (a == -1) return b == min_val;
+    if (b == -1) return a == min_val;
+
+    if (a > 0)
+        if (b > 0)
+            return a > max_val / b;
+        else
+            return b < min_val / a;
+    else if (b > 0)
+        return a < min_val / b;
+    else
+        return a < max_val / b; // b < 0, safe because b != -1 here
 }
 
 template<nat_t w>
@@ -122,6 +129,7 @@ constexpr bool shl_nuw(u64 u, unsigned k) {
     static_assert(w >= 1 && w <= 64);
     u = trunc<w>(u);
     if (k == 0) return false;
+    if (k >= w) return u != 0;
     return (u >> (w - k)) != 0;
 }
 
@@ -132,9 +140,9 @@ constexpr bool shl_nsw(u64 u, unsigned k) {
     if (k == 0) return false;
     if (k >= w) return sext<w>(u) != 0;
     s64 a     = sext<w>(u);
-    u64 shift = w - 1 - k;        // bits above the kept region
-    s64 top   = a >> shift;       // top (k+1) bits, sign extended into full s64
-    return top != 0 && top != -1; // overflow iff not all same: not (all 0 or all 1)
+    u64 shift = w - 1 - k;
+    s64 top   = a >> shift;
+    return top != 0 && top != -1;
 }
 
 template<nat_t w>
@@ -152,8 +160,6 @@ constexpr bool sdivrem(u64 u, u64 v) {
     }
 }
 
-// ---------- icmp helpers ----------
-
 template<nat_t w, icmp id>
 constexpr bool fold_icmp(u64 a, u64 b) {
     static_assert(w >= 1 && w <= 64);
@@ -166,11 +172,11 @@ constexpr bool fold_icmp(u64 a, u64 b) {
     flags_t rel = 0;
     // clang-format off
     if (false) {}
-    else if (u == v)     rel = icmp_mask & flags_t(icmp::xyglE); // equal
-    else if (!su &&  sv) rel = icmp_mask & flags_t(icmp::Xygle); // plus, minus
-    else if ( su && !sv) rel = icmp_mask & flags_t(icmp::xYgle); // minus, plus
-    else if (u > v)      rel = icmp_mask & flags_t(icmp::xyGle); // same-sign greater
-    else                 rel = icmp_mask & flags_t(icmp::xygLe); // same-sign less
+    else if (u == v)     rel = icmp_mask & flags_t(icmp::xyglE);
+    else if (!su &&  sv) rel = icmp_mask & flags_t(icmp::Xygle);
+    else if ( su && !sv) rel = icmp_mask & flags_t(icmp::xYgle);
+    else if (u > v)      rel = icmp_mask & flags_t(icmp::xyGle);
+    else                 rel = icmp_mask & flags_t(icmp::xygLe);
     // clang-format on
 
     return (flags_t(id) & rel) != 0;
@@ -191,12 +197,23 @@ static_assert(!add_nsw<8>(  1, 2));
 static_assert(sub_nuw<8>(0, 1));
 static_assert(sub_nsw<8>(0x80, 1)); // -128 - 1
 
-static_assert(mul_nuw<8>(16, 16));
-static_assert(mul_nsw<8>(20, 20));
+static_assert( mul_nuw<8>(16, 16));
+static_assert( mul_nsw<8>(20, 20));
+static_assert( mul_nsw<8>(0x80, 0xff)); // -128 * -1 overflows
+static_assert(!mul_nsw<8>(0x80, 1));   // -128 * 1 ok
+static_assert(!mul_nsw<8>(0xff, 0xff)); // -1 * -1 ok
+static_assert(!mul_nsw<64>(u64(0), u64(123)));
+static_assert(!mul_nsw<64>(u64(1), u64(1)));
+static_assert(!mul_nsw<64>(u64(-1), u64(1)));
+static_assert( mul_nsw<64>(0x8000000000000000ull, 0xffffffffffffffffull)); // INT64_MIN * -1
 
 static_assert(!shl_nuw<8>(1, 7));
 static_assert( shl_nuw<8>(0x80, 1));
 static_assert( shl_nsw<8>(0x40, 1));
+static_assert(!shl_nuw<8>(0, 8));
+static_assert( shl_nuw<8>(1, 8));
+static_assert( shl_nsw<8>(1, 8));
+static_assert(!shl_nsw<8>(0, 8));
 
 static_assert( fold_icmp<3, icmp::e >(0b010, 0b010));
 static_assert( fold_icmp<3, icmp::ne>(0b010, 0b011));
@@ -205,6 +222,9 @@ static_assert( fold_icmp<3, icmp::ul>(0b011, 0b100)); //  3 <  4
 static_assert( fold_icmp<3, icmp::sl>(0b100, 0b011)); // -4 <  3
 static_assert( fold_icmp<3, icmp::t >(0b001, 0b111));
 static_assert(!fold_icmp<3, icmp::f >(0b001, 0b111));
+
+static_assert(!sdivrem<64>(0xffffffffffffffffull, 1)); // -1 / 1 ok
+static_assert( sdivrem<64>(0x8000000000000000ull, 0xffffffffffffffffull)); // INT64_MIN / -1 bad
 // clang-format on
 
 template<class Id, Id id, nat_t w>
@@ -220,27 +240,27 @@ std::optional<u64> fold(u64 a, u64 b, [[maybe_unused]] bool nsw, [[maybe_unused]
     if constexpr (std::is_same_v<Id, wrap>) {
         if constexpr (id == wrap::add) {
             if constexpr (w == 1) {
-                return bool(u ^ v);
+                return u64(bool(u ^ v));
             } else {
                 if (nuw && add_nuw<w>(u, v)) return {};
                 if (nsw && add_nsw<w>(u, v)) return {};
-                return UT(trunc<w>(u + v));
+                return trunc<w>(u + v);
             }
         } else if constexpr (id == wrap::sub) {
             if constexpr (w == 1) {
-                return bool(u ^ v);
+                return u64(bool(u ^ v));
             } else {
                 if (nuw && sub_nuw<w>(u, v)) return {};
                 if (nsw && sub_nsw<w>(u, v)) return {};
-                return UT(trunc<w>(u - v));
+                return trunc<w>(u - v);
             }
         } else if constexpr (id == wrap::mul) {
             if constexpr (w == 1) {
-                return bool(u & v);
+                return u64(bool(u & v));
             } else {
                 if (nuw && mul_nuw<w>(u, v)) return {};
                 if (nsw && mul_nsw<w>(u, v)) return {};
-                return UT(trunc<w>(u * v));
+                return trunc<w>(u * v);
             }
         } else if constexpr (id == wrap::shl) {
             if (b >= w) return {};
@@ -248,11 +268,11 @@ std::optional<u64> fold(u64 a, u64 b, [[maybe_unused]] bool nsw, [[maybe_unused]
 
             if constexpr (w == 1) {
                 if (k != 0) return {};
-                return bool(u);
+                return u64(bool(u));
             } else {
                 if (nuw && shl_nuw<w>(u, k)) return {};
                 if (nsw && shl_nsw<w>(u, k)) return {};
-                return UT(trunc<w>(u << k));
+                return trunc<w>(u << k);
             }
         } else {
             static_assert(false, "missing wrap subtag");
@@ -263,48 +283,48 @@ std::optional<u64> fold(u64 a, u64 b, [[maybe_unused]] bool nsw, [[maybe_unused]
 
         if constexpr (id == shr::a)
             if constexpr (w == 1)
-                return bool(u);
+                return u64(bool(u));
             else
-                return ST(static_cast<ST>(sext<w>(u) >> k));
+                return trunc<w>(static_cast<u64>(static_cast<ST>(sext<w>(u) >> k)));
         else if constexpr (id == shr::l)
-            return UT(trunc<w>(u >> k));
+            return trunc<w>(u >> k);
         else
             static_assert(false, "missing shr subtag");
     } else if constexpr (std::is_same_v<Id, div>) {
         if (v == 0) return {};
 
-        if constexpr (id == div::udiv)
-            return UT(trunc<w>(u / v));
-        else if constexpr (id == div::urem)
-            return UT(trunc<w>(u % v));
-        else if constexpr (id == div::sdiv) {
+        if constexpr (id == div::udiv) {
+            return trunc<w>(u / v);
+        } else if constexpr (id == div::urem) {
+            return trunc<w>(u % v);
+        } else if constexpr (id == div::sdiv) {
             if (sdivrem<w>(u, v)) return {};
-            return ST(static_cast<ST>(sext<w>(u) / sext<w>(v)));
+            return trunc<w>(static_cast<u64>(static_cast<ST>(sext<w>(u) / sext<w>(v))));
         } else if constexpr (id == div::srem) {
             if (sdivrem<w>(u, v)) return {};
-            return ST(static_cast<ST>(sext<w>(u) % sext<w>(v)));
+            return trunc<w>(static_cast<u64>(static_cast<ST>(sext<w>(u) % sext<w>(v))));
         } else {
             static_assert(false, "missing div subtag");
         }
     } else if constexpr (std::is_same_v<Id, icmp>) {
-        return fold_icmp<w, id>(u, v);
+        return u64(fold_icmp<w, id>(u, v));
     } else if constexpr (std::is_same_v<Id, extrema>) {
         if constexpr (id == extrema::sm) {
             UT uu = static_cast<UT>(u);
             UT vv = static_cast<UT>(v);
-            return std::min(uu, vv);
+            return trunc<w>(static_cast<u64>(std::min(uu, vv)));
         } else if constexpr (id == extrema::sM) {
             UT uu = static_cast<UT>(u);
             UT vv = static_cast<UT>(v);
-            return std::max(uu, vv);
+            return trunc<w>(static_cast<u64>(std::max(uu, vv)));
         } else if constexpr (id == extrema::Sm) {
             ST ss = static_cast<ST>(sext<w>(u));
             ST tt = static_cast<ST>(sext<w>(v));
-            return std::min(ss, tt);
+            return trunc<w>(static_cast<u64>(std::min(ss, tt)));
         } else if constexpr (id == extrema::SM) {
             ST ss = static_cast<ST>(sext<w>(u));
             ST tt = static_cast<ST>(sext<w>(v));
-            return std::max(ss, tt);
+            return trunc<w>(static_cast<u64>(std::max(ss, tt)));
         } else {
             static_assert(false, "missing extrema subtag");
         }
