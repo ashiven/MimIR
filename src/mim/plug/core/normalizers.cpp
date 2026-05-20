@@ -1,7 +1,5 @@
 #include <type_traits>
 
-#include <mim/normalize.h>
-
 #include <mim/plug/math/math.h>
 #include <mim/plug/mem/mem.h>
 
@@ -221,7 +219,7 @@ static_assert(!fold_icmp<3, icmp::f >(0b001, 0b111));
 // clang-format on
 
 template<class Id, Id id, nat_t w>
-Res fold(u64 a, u64 b, [[maybe_unused]] bool nsw, [[maybe_unused]] bool nuw) {
+std::optional<u64> fold(u64 a, u64 b, [[maybe_unused]] bool nsw, [[maybe_unused]] bool nuw) {
     static_assert(w >= 1 && w <= 64);
 
     using ST = w2s<w>;
@@ -342,7 +340,7 @@ const Def* fold(World& world, const Def* type, const Def*& a, const Def*& b, con
                 nuw    = fe::has_flag(m, Mode::nuw);
             }
 
-            Res res;
+            std::optional<u64> res;
             switch (width) {
 #define CODE(i) \
     case i: res = fold<Id, id, i>(*la, *lb, nsw, nuw); break;
@@ -363,7 +361,7 @@ const Def* fold(World& world, const Def* type, const Def*& a, const Def*& b, con
 }
 
 template<class Id, nat_t w>
-Res fold(u64 a, [[maybe_unused]] bool nsw, [[maybe_unused]] bool nuw) {
+std::optional<u64> fold(u64 a, [[maybe_unused]] bool nsw, [[maybe_unused]] bool nuw) {
     static_assert(w >= 1 && w <= 64);
 
     using ST = w2s<w>;
@@ -404,7 +402,7 @@ const Def* fold(World& world, const Def* type, const Def*& a) {
         auto size  = Lit::as(Idx::isa(a->type()));
         auto width = Idx::size2bitwidth(size);
         bool nsw = false, nuw = false;
-        Res res;
+        std::optional<u64> res;
         switch (width) {
 #define CODE(i) \
     case i: res = fold<Id, i>(*la, nsw, nuw); break;
