@@ -55,7 +55,7 @@ const Def* make_binary_tree(Defs args) {
     assert(!args.empty());
     auto& world = args.front()->world();
     return std::accumulate(args.begin() + 1, args.end(), args.front(), [&world](const Def* lhs, const Def* rhs) {
-        return world.call<ConjOrDisj, false>(Defs{lhs, rhs});
+        return world.call_norm<ConjOrDisj, false>(Defs{lhs, rhs});
     });
 }
 
@@ -178,7 +178,7 @@ const Def* normalize_disj(const Def* type, const Def*, const Def* arg) {
                     if (contains_empty)
                         // (any|) matches everything, including empty string
                         // don't normalize again, as we'd just run into this normalizer again..
-                        return world.call<disj, false>(Defs{world.annex<any>(), world.annex<empty>()});
+                        return world.call_norm<disj, false>(Defs{world.annex<any>(), world.annex<empty>()});
                     else
                         return world.annex<any>();
                 };
@@ -205,7 +205,7 @@ const Def* normalize_disj(const Def* type, const Def*, const Def* arg) {
                 world.DLOG("final ranges {}", fe::Join(new_args));
 
                 if (new_args.size() > 2) return make_binary_tree<disj>(new_args);
-                if (new_args.size() > 1) return world.call<disj, false>(new_args);
+                if (new_args.size() > 1) return world.call_norm<disj, false>(new_args);
                 return new_args.back();
         }
     }

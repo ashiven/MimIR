@@ -376,7 +376,11 @@ public:
     const Def* app(const Def* callee, const Def* arg);
     const Def* app(const Def* callee, Defs args) { return app(callee, tuple(args)); }
     template<bool Normalize = true>
-    const Def* app_internal(const Def* callee, const Def* arg);
+    const Def* app_norm(const Def* callee, const Def* arg);
+    template<bool Normalize = true>
+    const Def* app_norm(const Def* callee, Defs args) {
+        return app_norm<Normalize>(callee, tuple(args));
+    }
     const Def* raw_app(const Axm* axm, u8 curry, u8 trip, const Def* type, const Def* callee, const Def* arg);
     const Def* raw_app(const Def* type, const Def* callee, const Def* arg);
     const Def* raw_app(const Def* type, const Def* callee, Defs args) { return raw_app(type, callee, tuple(args)); }
@@ -576,40 +580,73 @@ public:
         return implicit_app(callee, lit_nat(std::to_underlying(arg)));
     }
     template<bool Normalize = true>
-    const Def* implicit_app_internal(const Def* callee, const Def* arg);
+    const Def* implicit_app_norm(const Def* callee, const Def* arg);
+    template<bool Normalize = true>
+    const Def* implicit_app_norm(const Def* callee, Defs args) {
+        return implicit_app_norm<Normalize>(callee, tuple(args));
+    }
+    template<bool Normalize = true>
+    const Def* implicit_app_norm(const Def* callee, nat_t arg) {
+        return implicit_app_norm<Normalize>(callee, lit_nat(arg));
+    }
+    template<bool Normalize = true, class E>
+    const Def* implicit_app_norm(const Def* callee, E arg)
+        requires std::is_enum_v<E> && std::is_same_v<std::underlying_type_t<E>, nat_t>
+    {
+        return implicit_app_norm<Normalize>(callee, lit_nat(std::to_underlying(arg)));
+    }
     ///@}
 
     /// @name call
     /// Complete curried call of @p callee obeying implicits.
     ///@{
-    template<bool Normalize = true, class T, class... Args>
+    template<class T, class... Args>
     const Def* call(const Def* callee, T&& arg, Args&&... args) {
-        return call<Normalize>(implicit_app<Normalize>(callee, std::forward<T>(arg)), std::forward<Args>(args)...);
+        return call(implicit_app(callee, std::forward<T>(arg)), std::forward<Args>(args)...);
     }
-
     /// Base case.
-    template<bool Normalize = true, class T>
+    template<class T>
     const Def* call(const Def* callee, T&& arg) {
-        return implicit_app<Normalize>(callee, std::forward<T>(arg));
+        return implicit_app(callee, std::forward<T>(arg));
     }
-
     /// Annex overload with enum instance as first argument.
-    template<Enum Id, bool Normalize = true, class... Args>
+    template<Enum Id, class... Args>
     const Def* call(Id id, Args&&... args) {
-        return call<Normalize>(annex(id), std::forward<Args>(args)...);
+        return call(annex(id), std::forward<Args>(args)...);
     }
-
     /// Annex overload with enum tempalte argument @p Id for annexes w/o subtag.
-    template<class Id, bool Normalize = true, class... Args>
+    template<class Id, class... Args>
     requires std::is_enum_v<Id>
     const Def* call(Args&&... args) {
-        return call<Normalize>(annex<Id>(), std::forward<Args>(args)...);
+        return call(annex<Id>(), std::forward<Args>(args)...);
+    }
+    /// Annex overload with `flags_t` as first argument.
+    template<class... Args>
+    const Def* call(flags_t id, Args&&... args) {
+        return call(annex(id), std::forward<Args>(args)...);
     }
 
-    /// Annex overload with `flags_t` as first argument.
+    template<bool Normalize = true, class T, class... Args>
+    const Def* call_norm(const Def* callee, T&& arg, Args&&... args) {
+        return call_norm<Normalize>(implicit_app_norm<Normalize>(callee, std::forward<T>(arg)),
+                                    std::forward<Args>(args)...);
+    }
+    template<bool Normalize = true, class T>
+    const Def* call_norm(const Def* callee, T&& arg) {
+        return implicit_app_norm<Normalize>(callee, std::forward<T>(arg));
+    }
+    template<Enum Id, bool Normalize = true, class... Args>
+    const Def* call_norm(Id id, Args&&... args) {
+        return call_norm<Normalize>(annex(id), std::forward<Args>(args)...);
+    }
+    template<class Id, bool Normalize = true, class... Args>
+    requires std::is_enum_v<Id>
+    const Def* call_norm(Args&&... args) {
+        return call_norm<Normalize>(annex<Id>(), std::forward<Args>(args)...);
+    }
     template<bool Normalize = true, class... Args>
-    const Def* call(flags_t id, Args&&... args) {
-        return call<Normalize>(annex(id), std::forward<Args>(args)...);
+    const Def* call_norm(flags_t id, Args&&... args) {
+        return call_norm<Normalize>(annex(id), std::forward<Args>(args)...);
     }
     ///@}
 

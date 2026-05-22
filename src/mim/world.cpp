@@ -190,22 +190,22 @@ const Def* World::var(Def* mut) {
 }
 
 const Def* World::implicit_app(const Def* callee, const Def* arg) {
-    return flags().no_normalize ? implicit_app_internal<false>(callee, arg) : implicit_app_internal<true>(callee, arg);
+    return flags().no_normalize ? implicit_app_norm<false>(callee, arg) : implicit_app_norm<true>(callee, arg);
 }
 
 template<bool Normalize>
-const Def* World::implicit_app_internal(const Def* callee, const Def* arg) {
+const Def* World::implicit_app_norm(const Def* callee, const Def* arg) {
     while (auto pi = Pi::isa_implicit(callee->type()))
-        callee = app_internal<Normalize>(callee, mut_hole(pi->dom()));
-    return app_internal<Normalize>(callee, arg);
+        callee = app_norm<Normalize>(callee, mut_hole(pi->dom()));
+    return app_norm<Normalize>(callee, arg);
 }
 
 const Def* World::app(const Def* callee, const Def* arg) {
-    return flags().no_normalize ? app_internal<false>(callee, arg) : app_internal<true>(callee, arg);
+    return flags().no_normalize ? app_norm<false>(callee, arg) : app_norm<true>(callee, arg);
 }
 
 template<bool Normalize>
-const Def* World::app_internal(const Def* callee, const Def* arg) {
+const Def* World::app_norm(const Def* callee, const Def* arg) {
     callee = callee->zonk();
     arg    = arg->zonk();
 
@@ -251,8 +251,6 @@ const Def* World::app_internal(const Def* callee, const Def* arg) {
 
                 if (auto normalizer = axm->normalizer(); Normalize && normalizer && curry == 0) {
                     {
-                        std::cout << Normalize << "\n";
-                        std::cout << "Normalizing " << callee << " " << arg << "\n";
                         if (auto norm = normalizer(type, callee, arg)) return norm;
                     }
                 }
@@ -753,10 +751,10 @@ template const Def* World::ext<true>(const Def*);
 template const Def* World::ext<false>(const Def*);
 template const Def* World::bound<true>(Defs);
 template const Def* World::bound<false>(Defs);
-template const Def* World::app_internal<true>(const Def*, const Def*);
-template const Def* World::app_internal<false>(const Def*, const Def*);
-template const Def* World::implicit_app_internal<true>(const Def*, const Def*);
-template const Def* World::implicit_app_internal<false>(const Def*, const Def*);
+template const Def* World::app_norm<true>(const Def*, const Def*);
+template const Def* World::app_norm<false>(const Def*, const Def*);
+template const Def* World::implicit_app_norm<true>(const Def*, const Def*);
+template const Def* World::implicit_app_norm<false>(const Def*, const Def*);
 #endif
 
 } // namespace mim
