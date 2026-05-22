@@ -212,7 +212,6 @@ const Def* World::app_norm(const Def* callee, const Def* arg) {
     if (auto pi = callee->type()->isa<Pi>()) {
         if (auto new_arg = Checker::assignable(pi->dom(), arg)) {
             arg = new_arg->zonk();
-            // TODO: Where lam body substitution happens
             if (auto imm = callee->isa_imm<Lam>()) return imm->body();
 
             if (auto lam = callee->isa_mut<Lam>(); lam && lam->is_set() && lam->filter() != lit_ff()) {
