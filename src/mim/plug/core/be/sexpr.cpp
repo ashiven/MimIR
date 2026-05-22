@@ -817,14 +817,25 @@ std::string Emitter::emit_bb(BB& bb, const Def* def) {
         if (is_bound(lam))
             std::print(os, "\n{}{}", tab, id(lam, true));
         else {
+            auto ext      = lam->is_external() ? "extern" : "intern";
             auto lam_kind = Lam::isa_returning(lam) ? "fun" : Lam::isa_cn(lam) ? "con" : "lam";
             std::string var_val;
             if (auto var = lam->has_var())
                 var_val = emit_var(bb, var, var->type());
             else
                 var_val = slotted() ? "$dummy" : "(var dummy)";
-            std::print(os, "\n{}({} {}", tab, lam_kind, var_val);
+
+            std::print(os, "\n{}({}", tab, lam_kind);
             ++tab;
+            if (!slotted()) {
+                std::print(os, "\n{}{}", tab, ext);
+                std::print(os, "\n{}{}", tab, id(lam));
+            }
+            std::print(os, "\n{}{}", tab, var_val);
+            if (!slotted()) {
+                std::print(os, "\n{}{}", tab, emit_type(bb, lam->dom()));
+                std::print(os, "\n{}{}", tab, emit_type(bb, lam->codom()));
+            }
             if (slotted()) std::print(os, "\n{}(scope", tab);
             std::print(os, "{}", emit_bb(bb, lam->filter()));
             std::print(os, "{}", emit_bb(bb, lam->body()));
