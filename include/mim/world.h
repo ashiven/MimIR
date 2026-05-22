@@ -376,11 +376,7 @@ public:
     const Def* app(const Def* callee, const Def* arg);
     const Def* app(const Def* callee, Defs args) { return app(callee, tuple(args)); }
     template<bool Normalize = true>
-    const Def* app_impl(const Def* callee, const Def* arg);
-    template<bool Normalize = true>
-    const Def* app_impl(const Def* callee, Defs args) {
-        return app_impl<Normalize>(callee, tuple(args));
-    }
+    const Def* app_internal(const Def* callee, const Def* arg);
     const Def* raw_app(const Axm* axm, u8 curry, u8 trip, const Def* type, const Def* callee, const Def* arg);
     const Def* raw_app(const Def* type, const Def* callee, const Def* arg);
     const Def* raw_app(const Def* type, const Def* callee, Defs args) { return raw_app(type, callee, tuple(args)); }
@@ -570,22 +566,17 @@ public:
     /// @name implicit_app - Cope with implicit Arguments
     /// Places Hole%s as demanded by Pi::is_implicit() and then apps @p arg.
     ///@{
-    template<bool Normalize = true>
     const Def* implicit_app(const Def* callee, const Def* arg);
-    template<bool Normalize = true>
-    const Def* implicit_app(const Def* callee, Defs args) {
-        return implicit_app<Normalize>(callee, tuple(args));
-    }
-    template<bool Normalize = true>
-    const Def* implicit_app(const Def* callee, nat_t arg) {
-        return implicit_app<Normalize>(callee, lit_nat(arg));
-    }
-    template<bool Normalize = true, class E>
+    const Def* implicit_app(const Def* callee, Defs args) { return implicit_app(callee, tuple(args)); }
+    const Def* implicit_app(const Def* callee, nat_t arg) { return implicit_app(callee, lit_nat(arg)); }
+    template<class E>
     const Def* implicit_app(const Def* callee, E arg)
         requires std::is_enum_v<E> && std::is_same_v<std::underlying_type_t<E>, nat_t>
     {
-        return implicit_app<Normalize>(callee, lit_nat(std::to_underlying(arg)));
+        return implicit_app(callee, lit_nat(std::to_underlying(arg)));
     }
+    template<bool Normalize = true>
+    const Def* implicit_app_internal(const Def* callee, const Def* arg);
     ///@}
 
     /// @name call
