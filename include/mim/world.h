@@ -388,7 +388,12 @@ public:
 
     /// @name Sigma
     ///@{
-    Sigma* mut_sigma(const Def* type, size_t size) { return insert<Sigma>(type, size); }
+    Sigma* mut_sigma(const Def* type, size_t size) {
+        // Ensures that the corresponding @p size literal exists in the world
+        // and may be accessed even if the world is in a frozen state.
+        lit_nat(size);
+        return insert<Sigma>(type, size);
+    }
     /// A *mutable* Sigma of type @p level.
     template<level_t level = 0>
     Sigma* mut_sigma(size_t size) {
