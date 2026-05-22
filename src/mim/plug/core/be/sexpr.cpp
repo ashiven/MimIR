@@ -327,8 +327,7 @@ std::set<Lam*> Emitter::next_lams(Lam* lam) {
     for (auto op : lam->deps()) {
         for (auto mut : op->local_muts())
             if (auto next = nest()[mut]) {
-                // Unnamed lams will be printed inline
-                if (auto next_lam = next->mut()->isa<Lam>(); is_bound(next_lam)) next_lams.insert(next_lam);
+                if (auto next_lam = next->mut()->isa<Lam>()) next_lams.insert(next_lam);
             }
     }
     return next_lams;
@@ -379,7 +378,13 @@ void Emitter::emit_lam(Lam* lam, LamSet& rec_lams) {
     assert(lam2bb_.contains(lam));
     auto& bb = lam2bb_[lam];
 
-    bool as_binding = !lam->is_closed();
+    // TODO: We need to prevent all prints and indentation for lambdas that are !is_bound(lam) because
+    // we are going to print them inline. We do however still need to call emit_lam for
+    // them to ensure the whole nest is traversed and their deps are emitted.
+    // - In rebuild_var, we need to ensure that nx is emitted as binding under test but
+    //   the anonymous cons are emitted inline
+
+    bool as_binding = lam != root();
     std::print(func_impls_, "{}", emit_head(bb, lam, as_binding));
 
     ++tab;
@@ -820,8 +825,8 @@ std::string Emitter::emit_bb(BB& bb, const Def* def) {
             auto ext      = lam->is_external() ? "extern" : "intern";
             auto lam_kind = Lam::isa_returning(lam) ? "fun" : Lam::isa_cn(lam) ? "con" : "lam";
             std::string var_val;
-            if (auto var = lam->has_var())
-                var_val = emit_var(bb, var, var->type());
+            if (auto mut_lam = lam->isa_mut<Lam>())
+                var_val = emit_var(bb, mut_lam->var(), mut_lam->var()->type());
             else
                 var_val = slotted() ? "$dummy" : "(var dummy)";
 
