@@ -373,11 +373,13 @@ public:
 
     /// @name App
     ///@{
-    template<bool Normalize = true>
     const Def* app(const Def* callee, const Def* arg);
+    const Def* app(const Def* callee, Defs args) { return app(callee, tuple(args)); }
     template<bool Normalize = true>
-    const Def* app(const Def* callee, Defs args) {
-        return app<Normalize>(callee, tuple(args));
+    const Def* app_impl(const Def* callee, const Def* arg);
+    template<bool Normalize = true>
+    const Def* app_impl(const Def* callee, Defs args) {
+        return app_impl<Normalize>(callee, tuple(args));
     }
     const Def* raw_app(const Axm* axm, u8 curry, u8 trip, const Def* type, const Def* callee, const Def* arg);
     const Def* raw_app(const Def* type, const Def* callee, const Def* arg);

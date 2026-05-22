@@ -10,6 +10,7 @@ namespace mim {
 /// @see @ref cli
 struct Flags {
     uint64_t scalarize_threshold = 32;
+    bool no_normalize            = false;
     bool ascii                   = false;
     bool dump_recursive          = false;
     bool bootstrap               = false;

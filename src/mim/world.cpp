@@ -192,12 +192,16 @@ const Def* World::var(Def* mut) {
 template<bool Normalize>
 const Def* World::implicit_app(const Def* callee, const Def* arg) {
     while (auto pi = Pi::isa_implicit(callee->type()))
-        callee = app(callee, mut_hole(pi->dom()));
-    return app<Normalize>(callee, arg);
+        callee = app_impl(callee, mut_hole(pi->dom()));
+    return app_impl<Normalize>(callee, arg);
+}
+
+const Def* World::app(const Def* callee, const Def* arg) {
+    return flags().no_normalize ? app_impl<false>(callee, arg) : app_impl<true>(callee, arg);
 }
 
 template<bool Normalize>
-const Def* World::app(const Def* callee, const Def* arg) {
+const Def* World::app_impl(const Def* callee, const Def* arg) {
     callee = callee->zonk();
     arg    = arg->zonk();
 
@@ -740,8 +744,8 @@ template const Def* World::ext<true>(const Def*);
 template const Def* World::ext<false>(const Def*);
 template const Def* World::bound<true>(Defs);
 template const Def* World::bound<false>(Defs);
-template const Def* World::app<true>(const Def*, const Def*);
-template const Def* World::app<false>(const Def*, const Def*);
+template const Def* World::app_impl<true>(const Def*, const Def*);
+template const Def* World::app_impl<false>(const Def*, const Def*);
 template const Def* World::implicit_app<true>(const Def*, const Def*);
 template const Def* World::implicit_app<false>(const Def*, const Def*);
 #endif
