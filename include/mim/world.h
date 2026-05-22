@@ -14,6 +14,7 @@
 
 #include "mim/util/dbg.h"
 #include "mim/util/log.h"
+#include "mim/util/span.h"
 
 namespace mim {
 
@@ -197,7 +198,7 @@ public:
     const Def* annex(Id id) {
         auto flags = static_cast<flags_t>(id);
         if (auto i = move_.flags2annex.find(flags); i != move_.flags2annex.end()) return i->second;
-        error("Axm with ID '{x}' not found; demangled plugin name is '{}'", flags, Annex::demangle(driver(), flags));
+        error("Axm with ID '{:x}' not found; demangled plugin name is '{}'", flags, Annex::demangle(driver(), flags));
     }
 
     /// Get Axm from a plugin.
@@ -611,6 +612,12 @@ public:
     const Def* call(Args&&... args) {
         return call<Normalize>(annex<Id>(), std::forward<Args>(args)...);
     }
+
+    /// Annex overload with `flags_t` as first argument.
+    template<bool Normalize = true, class... Args>
+    const Def* call(flags_t id, Args&&... args) {
+        return call<Normalize>(annex(id), std::forward<Args>(args)...);
+    }
     ///@}
 
     /// @name Vars & Muts
@@ -681,7 +688,7 @@ private:
         if (auto loc = get_loc()) def->set(loc);
 
 #ifdef MIM_ENABLE_CHECKS
-        if (flags().trace_gids) outln("{}: {} - {}", def->node_name(), def->gid(), def->flags());
+        if (flags().trace_gids) std::println("{}: {} - {}", def->node_name(), def->gid(), def->flags());
         if (flags().reeval_breakpoints && breakpoints().contains(def->gid())) fe::breakpoint();
 #endif
 
@@ -722,7 +729,7 @@ private:
         if (auto loc = get_loc()) def->set(loc);
 
 #ifdef MIM_ENABLE_CHECKS
-        if (flags().trace_gids) outln("{}: {} - {}", def->node_name(), def->gid(), def->flags());
+        if (flags().trace_gids) std::println("{}: {} - {}", def->node_name(), def->gid(), def->flags());
         if (breakpoints().contains(def->gid())) fe::breakpoint();
 #endif
         assert_emplace(move_.defs, def);

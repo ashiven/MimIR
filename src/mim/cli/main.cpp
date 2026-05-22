@@ -18,7 +18,7 @@ using namespace mim;
 using namespace std::literals;
 
 int main(int argc, char** argv) {
-    enum Backends { AST, Dot, H, LL, Md, Mim, Nest, SExpr, SlottedSExpr, Num_Backends };
+    enum Backends { AST, Dot, H, PY, LL, Md, Mim, Nest, SExpr, SlottedSExpr, Num_Backends };
 
     try {
         Driver driver;
@@ -53,6 +53,7 @@ int main(int argc, char** argv) {
             | lyra::opt(output[AST],  "file"               )      ["--output-ast"           ]("Directly emits AST representation of input.")
             | lyra::opt(output[Dot],  "file"               )      ["--output-dot"           ]("Emits the Mim program as a MimIR graph using Graphviz' DOT language.")
             | lyra::opt(output[H  ],  "file"               )      ["--output-h"             ]("Emits a header file to be used to interface with a plugin in C++.")
+            | lyra::opt(output[PY ],  "file"               )      ["--output-py"             ]("Emits a Python enum to be used to interface with a plugin in Python.")
             | lyra::opt(output[LL ],  "file"               )      ["--output-ll"            ]("Compiles the Mim program to LLVM.")
             | lyra::opt(output[Md ],  "file"               )      ["--output-md"            ]("Emits the input formatted as Markdown.")
             | lyra::opt(output[Mim],  "file"               )["-o"]["--output-mim"           ]("Emits the Mim program again.")
@@ -156,15 +157,18 @@ int main(int argc, char** argv) {
                 mod->add_implicit_imports(std::move(imports));
 
                 if (auto s = os[AST]) {
-                    Tab tab;
+                    auto tab = fe::Tab::spaces();
                     mod->stream(tab, *s);
                 }
 
-                if (auto h = os[H]) {
+                auto h  = os[H];
+                auto py = os[PY];
+                if (h || py) {
                     mod->bind(ast);
                     ast.error().ack();
                     auto plugin = world.sym(fs::path{path}.filename().replace_extension().string());
-                    ast.bootstrap(plugin, *h);
+                    if (h) ast.bootstrap(plugin, *h);
+                    if (py) ast.bootstrap_py(plugin, *py);
                     return EXIT_SUCCESS;
                 }
 
@@ -207,10 +211,10 @@ int main(int argc, char** argv) {
             return EXIT_FAILURE;
         }
     } catch (const std::exception& e) {
-        errln("{}", e.what());
+        std::println(std::cerr, "{}", e.what());
         return EXIT_FAILURE;
     } catch (...) {
-        errln("error: unknown exception");
+        std::println(std::cerr, "error: unknown exception");
         return EXIT_FAILURE;
     }
 

@@ -60,8 +60,8 @@ Driver::Driver()
             add_search_path(sub_path);
     }
 
-    // add path/to/mim.exe/../../lib/mim
-    if (auto path = sys::path_to_curr_exe()) add_search_path(path->parent_path().parent_path() / MIM_LIBDIR / "mim");
+    // add <path/to/libmim>/mim
+    if (auto path = sys::path_to_libmim()) add_search_path(path->parent_path() / "mim");
 
     // add install path if different from above
     if (auto install_path = fs::path{MIM_INSTALL_PREFIX} / MIM_LIBDIR / "mim"; fs::exists(install_path)) {
@@ -86,7 +86,7 @@ void Driver::load(Sym name) {
         handle.reset(dl::open(name.c_str()));
     if (!handle) {
         for (const auto& path : search_paths()) {
-            auto full_path = path / fmt("libmim_{}.{}", name, dl::extension);
+            auto full_path = path / std::format("libmim_{}.{}", name, dl::extension);
             std::error_code ignore;
             if (bool reg_file = fs::is_regular_file(full_path, ignore); reg_file && !ignore) {
                 auto path_str = full_path.string();
@@ -102,7 +102,8 @@ void Driver::load(Sym name) {
         auto plugin = get_info();
         if (version() != plugin.version) {
             std::ostringstream oss;
-            print(oss, "plugin {} has version {} while MimIR has version {}", plugin.name, plugin.version, version());
+            std::print(oss, "plugin {} has version {} while MimIR has version {}", plugin.name, plugin.version,
+                       version());
             if (flags().force_load)
                 std::cerr << "warning: " << oss.str() << '\n';
             else
