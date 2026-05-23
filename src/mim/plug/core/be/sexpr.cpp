@@ -756,17 +756,13 @@ std::string Emitter::emit_node(BB& bb, const Def* def, std::string node_name, bo
     }
 
     if (auto pack = def->isa<Pack>()) {
-        ++tab;
         if (auto var = pack->has_var()) {
-            std::string var_val
-                = std::format("\n{}{}", tab, (slotted() ? id(var) + " (scope" : "(var " + id(var) + " nil)"));
+            std::string var_val = " " + (slotted() ? id(var) + " (scope" : "(var " + id(var) + " nil)");
             op_vals.push_back(var_val);
         } else {
-            std::string var_val = std::format("\n{}{}", tab, (slotted() ? "$dummy (scope" : "(var dummy)"));
+            std::string var_val = slotted() ? " $dummy (scope" : " (var dummy)";
             op_vals.push_back(var_val);
         }
-        --tab;
-
         if (auto arity_val = emit_bb(bb, pack->arity()); !arity_val.empty()) op_vals.push_back(arity_val);
     }
 
