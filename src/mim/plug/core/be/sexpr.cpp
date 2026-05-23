@@ -834,35 +834,35 @@ std::string Emitter::emit_bb(BB& bb, const Def* def) {
 
     if (typed()) std::print(os, "\n{}(@ {}", tab, emit_type(bb, def->type()));
 
-    if (auto lam = def->isa<Lam>()) {
+    if (def->isa_imm<Lam>()) {
+        assert("false" && "TODO immutable lam inline");
+
+    } else if (auto lam = def->isa_mut<Lam>()) {
         if (is_bound(lam))
             std::print(os, "\n{}{}", tab, id(lam, true));
         else {
-            auto ext      = lam->is_external() ? "extern" : "intern";
             auto lam_kind = Lam::isa_returning(lam) ? "fun" : Lam::isa_cn(lam) ? "con" : "lam";
-            std::string var_val;
-            if (auto mut_lam = lam->isa_mut<Lam>())
-                var_val = emit_var(bb, mut_lam->var(), mut_lam->var()->type());
-            else
-                var_val = slotted() ? "$dummy" : "(var dummy)";
-
-            std::print(os, "\n{}({}", tab, lam_kind);
-            ++tab;
-            if (!slotted()) {
-                std::print(os, "\n{}{}", tab, ext);
-                std::print(os, "\n{}{}", tab, id(lam));
-            }
-            std::print(os, "\n{}{}", tab, var_val);
-            if (!slotted()) {
+            if (slotted()) {
+                std::print(os, "\n{}({}", tab, lam_kind);
+                ++tab;
+                std::print(os, "\n{}{}", tab, emit_var(bb, lam->var(), lam->var()->type()));
+                std::print(os, "\n{}(scope", tab);
+                std::print(os, "{}", emit_bb(bb, lam->filter()));
+                std::print(os, "{}", emit_bb(bb, lam->body()));
+                --tab;
+                std::print(os, "))");
+            } else {
+                auto ext = lam->is_external() ? "extern" : "intern";
+                std::print(os, "\n{}({} {} {}", tab, lam_kind, ext, id(lam));
+                ++tab;
+                std::print(os, "\n{}{}", tab, emit_var(bb, lam->var(), lam->var()->type()));
                 std::print(os, "\n{}{}", tab, emit_type(bb, lam->dom()));
                 std::print(os, "\n{}{}", tab, emit_type(bb, lam->codom()));
+                std::print(os, "{}", emit_bb(bb, lam->filter()));
+                std::print(os, "{}", emit_bb(bb, lam->body()));
+                --tab;
+                std::print(os, ")");
             }
-            if (slotted()) std::print(os, "\n{}(scope", tab);
-            std::print(os, "{}", emit_bb(bb, lam->filter()));
-            std::print(os, "{}", emit_bb(bb, lam->body()));
-            --tab;
-            if (slotted()) std::print(os, ")");
-            std::print(os, ")");
         }
 
     } else if (auto lit = def->isa<Lit>()) {
