@@ -368,7 +368,12 @@ void Emitter::emit_decl(BB& bb, const Def* def) {
     if (auto axm = def->isa<Axm>()) {
         if (!world().flags2annex().contains(axm->flags()) && !is_declared(axm->sym().str())) {
             if (typed()) std::print(decls_, "(@ {}\n", emit_type(bb, axm->type()));
-            std::print(decls_, "(axm {} {}", id(axm), emit_type(bb, axm->type()));
+
+            if (slotted())
+                std::print(decls_, "(axm {}", id(axm));
+            else
+                std::print(decls_, "(axm {} {}", id(axm), emit_type(bb, axm->type()));
+
             if (typed()) std::print(decls_, ")");
             std::print(decls_, ")\n\n");
             declared_.insert(axm->sym().str());
@@ -898,6 +903,9 @@ std::string Emitter::emit_bb(BB& bb, const Def* def) {
 
         std::ostringstream app_os;
         if (Pi::isa_implicit(callee->type())) {
+            // TODO: The callee ends up being type annotated twice, once
+            // with its own annotation and another time with the application
+            // it was initially a part of.
             std::print(app_os, "{}", indent(tab.indent(), callee_val));
         } else {
             std::print(app_os, "\n{}(app", tab);
