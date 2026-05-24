@@ -1,4 +1,5 @@
 #include <iostream>
+#include <ranges>
 #include <regex>
 #include <sstream>
 
@@ -125,6 +126,7 @@ public:
     std::string emit_cons_type(BB& bb, View<const Def*> ops);
     std::string emit_type(BB& bb, const Def* type);
     std::string emit_cons(std::vector<std::string> op_vals);
+    std::string emit_explicit_app(BB& bb, const App* app);
     std::string emit_node(BB& bb, const Def* def, std::string node_name, bool variadic = false, bool with_type = false);
     std::string emit_bb(BB& bb, const Def* def);
 
@@ -743,6 +745,35 @@ std::string Emitter::emit_cons(std::vector<std::string> op_vals) {
     return os.str();
 }
 
+// Emits a curried application without its implicit/inferred arguments
+std::string Emitter::emit_explicit_app(BB& bb, const App* app) {
+    std::ostringstream os;
+
+    auto [callee, args] = app->uncurry();
+
+    std::vector<size_t> explicit_idxs;
+    auto arg_idx = 0;
+    auto curr_pi = callee->type();
+    while (curr_pi->isa<Pi>()) {
+        if (!Pi::isa_implicit(curr_pi)) explicit_idxs.push_back(arg_idx);
+        arg_idx++;
+        curr_pi = curr_pi->as<Pi>()->codom();
+    }
+    auto explicit_args = explicit_idxs | std::views::transform([&args](size_t idx) { return args[idx]; });
+
+    for ([[maybe_unused]] auto arg : explicit_args) {
+        std::print(os, "\n{}(app", tab);
+        ++tab;
+    }
+    for (auto [i, arg] : std::views::enumerate(explicit_args)) {
+        --tab;
+        if (i == 0) std::print(os, "\n{}{}", tab, emit_bb(bb, callee));
+        std::print(os, "\n{}{})", tab, emit_bb(bb, arg));
+    }
+
+    return os.str();
+}
+
 std::string Emitter::emit_node(BB& bb, const Def* def, std::string node_name, bool variadic, bool with_type) {
     std::ostringstream os;
 
@@ -884,29 +915,13 @@ std::string Emitter::emit_bb(BB& bb, const Def* def) {
         std::print(os, "{}", emit_node(bb, insert, "insert"));
     } else if (auto var = def->isa<Var>()) {
         std::print(os, "\n{}{}", tab, id(var, true));
-
     } else if (auto app = def->isa<App>()) {
-        // auto [callee, args] = app->uncurry();
-
-        // std::vector<size_t> implicit_idxs;
-        // auto arg_idx = 0;
-        // auto curr_pi = callee->type();
-        // while (curr_pi->isa<Pi>()) {
-        //     if (Pi::isa_implicit(curr_pi)) implicit_idxs.push_back(arg_idx);
-        //     arg_idx++;
-        //     curr_pi = curr_pi->as<Pi>()->codom();
-        // }
-
-        // std::print(os, "\n{}(app", tab);
-        // ++tab;
-        // std::print(os, "\n{}{}", tab, callee);
-        // for (auto& arg : args) {
-        //     std::print(os, "\n{}{}", tab, emit_bb(bb, arg));
-        //     if (&arg != &args.back()) std::print(os, "\n{}(app", tab);
-        // }
-        // --tab;
-
-        std::print(os, "{}", emit_node(bb, app, "app"));
+        if (!is_bound(app))
+            std::print(os, "{}", emit_explicit_app(bb, app));
+        else {
+            bb.assign(tab, slotted(), id(app), "{}", emit_explicit_app(bb, app));
+            std::print(os, "\n{}{}", tab, id(app, true));
+        }
     } else if (auto axm = def->isa<Axm>()) {
         std::print(os, "\n{}{}", tab, id(axm));
         emit_decl(bb, axm);
