@@ -903,9 +903,9 @@ std::string Emitter::emit_bb(BB& bb, const Def* def) {
 
         std::ostringstream app_os;
         if (Pi::isa_implicit(callee->type())) {
-            // TODO: The callee ends up being type annotated twice, once
-            // with its own annotation and another time with the annotation
-            // of its surrounding application that is now not being emitted.
+            // Removes the type annotation of an implicit app since we are not
+            // emitting this app, but emit only its callee (already annotated)
+            if (typed()) os.str("");
             std::print(app_os, "{}", indent(tab.indent(), callee_val));
         } else {
             std::print(app_os, "\n{}(app", tab);
@@ -926,6 +926,14 @@ std::string Emitter::emit_bb(BB& bb, const Def* def) {
         } else {
             std::print(os, "{}", app_val);
         }
+
+        // Short-circuit return to avoid emitting an extraneous closing parentheses
+        // for a type-annotation that we flushed (see explanation above.)
+        if (typed() && Pi::isa_implicit(callee->type())) {
+            --tab;
+            return os.str();
+        }
+
     } else if (auto axm = def->isa<Axm>()) {
         std::print(os, "\n{}{}", tab, id(axm));
         emit_decl(bb, axm);
