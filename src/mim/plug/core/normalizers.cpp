@@ -9,8 +9,6 @@ namespace mim::plug::core {
 
 namespace {
 
-constexpr bool idx_is_word_domain(u64 size) { return size == 0 || (size > 1 && std::has_single_bit(size)); }
-
 constexpr std::optional<nat_t> idx_word_width(u64 size) {
     if (size == 0) return 64;
     if (size <= 1 || !std::has_single_bit(size)) return {};
@@ -19,10 +17,7 @@ constexpr std::optional<nat_t> idx_word_width(u64 size) {
 
 constexpr bool idx_sign(u64 size, u64 x) {
     // Pre: x is already in range.
-    if (size == 0) {
-        // Idx 0 encodes 2^64.
-        return (x >> 63) != 0;
-    }
+    if (size == 0) return (x >> 63) != 0; // Idx 0 encodes 2^64.
 
     // signed representatives in [-floor(size/2), ceil(size/2)-1]
     return x > (size - 1) / 2;

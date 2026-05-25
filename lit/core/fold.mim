@@ -180,16 +180,12 @@ let _ = %refly.equiv.struc_eq (%core.wrap.mul %core.mode.nuw (2_5, 2_5), 4_5);
 let _ = %refly.check_bot (%core.wrap.add %core.mode.nuw (4_5, 1_5));
 let _ = %refly.check_bot (%core.wrap.sub %core.mode.nuw (0_5, 1_5));
 let _ = %refly.check_bot (%core.wrap.mul %core.mode.nuw (3_5, 4_5));
-//let _ = %refly.check_bot (%core.wrap.add %core.mode.nsw (1_5, 1_5));
-//let _ = %refly.check_bot (%core.wrap.sub %core.mode.nsw (1_5, 1_5));
-//let _ = %refly.check_bot (%core.wrap.mul %core.mode.nsw (1_5, 1_5));
+let _ = %refly.check_bot (%core.wrap.add %core.mode.nsw (1_5, 2_5));
 
 /// non-power-of-two arithmetic on Idx 10
 let _ = %refly.equiv.struc_eq (%core.wrap.add 0 (9_10, 1_10), 0_10);
 let _ = %refly.equiv.struc_eq (%core.wrap.sub 0 (0_10, 1_10), 9_10);
 let _ = %refly.equiv.struc_eq (%core.wrap.mul 0 (7_10, 8_10), 6_10);
-//let _ = %refly.equiv.struc_eq (%core.div.udiv (%mem.M 0, (9_10, 2_10)), (%mem.M 0, 4_10));
-//let _ = %refly.equiv.struc_eq (%core.div.urem (%mem.M 0, (9_10, 2_10)), (%mem.M 0, 1_10));
 
 /// extra edge checks for arbitrary icmp partitions
 let _ = %refly.equiv.struc_eq (%core.icmp.e   (4_5, 4_5), tt);
@@ -244,8 +240,10 @@ lam div_rem (m: %mem.M 0): %mem.M 0 =
     let _ = %refly.check_bot s;
 
     // non-power-of-two indices
-    let _ = %refly.equiv.struc_eq (%core.div.udiv (m, (4_5, 2_5)), (m, 2_5));
-    let _ = %refly.equiv.struc_eq (%core.div.urem (m, (4_5, 3_5)), (m, 1_5));
+    let (m, _) = %refly.equiv.struc_eq (%core.div.udiv (m, (9_10, 2_10)), (m, 4_10));
+    let (m, _) = %refly.equiv.struc_eq (%core.div.urem (m, (9_10, 2_10)), (m, 1_10));
+    let (m, _) = %refly.equiv.struc_eq (%core.div.udiv (m, (4_5, 2_5)), (m, 2_5));
+    let (m, _) = %refly.equiv.struc_eq (%core.div.urem (m, (4_5, 3_5)), (m, 1_5));
 
     // Idx 1
     let (m, r) = %core.div.udiv (m, (0_1, 0_1));
