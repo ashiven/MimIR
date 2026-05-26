@@ -45,8 +45,10 @@ axm %core.ncmp(gle = f, glE =  e, gLe =  l, gLE = le,
 /// This is per se neither signed nor unsigned.
 /// Instead, the operations themselves exhibit signed or unsigned behavior.
 ///
-/// For `Idx s`, **unsigned** interpretation is the canonical carrier order on the finite set / \f$ \{ 0, \dots, s-1 \} \f$.
-/// **Signed** interpretation is defined by choosing, for each residue class modulo \f$s\f$, / its canonical signed representative.
+/// For `Idx s`,
+/// * **unsigned** interpretation is the canonical carrier order on the finite set / \f$ \{ 0, \dots, s-1 \} \f$.
+/// * **signed** interpretation is defined by choosing, for each residue class modulo \f$s\f$, / its canonical signed representative.
+///
 /// Concretely, a value \f$x : \mathrm{Idx}\;s\f$ is considered non-negative iff / \f$ x \le \lfloor (s-1)/2 \rfloor \f$, and negative otherwise.
 /// Hence the signed range is
 /// \f$ \big[ -\lfloor s/2 \rfloor,\; \lceil s/2 \rceil - 1 \big] \f$.
@@ -86,7 +88,8 @@ axm %core.idx_unsafe: Nat → Idx ⊤:Nat, normalize_idx_unsafe;
 /// | neg    | o | x | negate                       |
 /// | id     | x | o | identity                     |
 /// | t      | x | x | always true                  |
-/// @todo Add ype constraint that bit1 is only allowed for powers of two.
+///
+/// @todo Add type constraint that `bit1` is only allowed for powers of two.
 ///
 axm %core.bit1(f, neg, id, t): {s: Nat} → [m: Nat] → Idx s → Idx s, normalize_bit1;
 ///
@@ -112,7 +115,8 @@ axm %core.bit1(f, neg, id, t): {s: Nat} → [m: Nat] → Idx s → Idx s, normal
 /// | ciff   |  x |  x |  o |  x | converse implication         |
 /// | or_    |  x |  x |  x |  o | or                           |
 /// | t      |  x |  x |  x |  x | always true                  |
-/// @todo Add ype constraint that bit2 is only allowed for powers of two.
+///
+/// @todo Add type constraint that `bit2` is only allowed for powers of two.
 ///
 axm %core.bit2( f,      nor, nciff, nfst, niff, nsnd, xor_, nand,
                 and_,  nxor,   snd,  iff,  fst, ciff,  or_,    t):
@@ -121,13 +125,14 @@ axm %core.bit2( f,      nor, nciff, nfst, niff, nsnd, xor_, nand,
 /// ### %%core.shr
 ///
 /// Shift right:
-///     * [`a`rithmetic shift right](https://en.wikipedia.org/wiki/Arithmetic_shift)
-///     * [`l`ogical shift right](https://en.wikipedia.org/wiki/Logical_shift)
+/// * [`a`rithmetic shift right](https://en.wikipedia.org/wiki/Arithmetic_shift)
+/// * [`l`ogical shift right](https://en.wikipedia.org/wiki/Logical_shift)
+///
 /// For `Idx s`, the shift count must be smaller than the minimal bit width needed to encode the carrier.
 /// For `Idx ⊤`, this width is `64`; otherwise it is `max(1, ceil(log2(s)))`.
 /// Larger counts are undefined behavior.
-/// `shr.l` divides the unsigned representative by `2^b`.
-/// `shr.a` divides the signed representative by `2^b`, rounding toward `-∞`.
+/// * `shr.l` divides the unsigned representative by `2^b`.
+/// * `shr.a` divides the signed representative by `2^b`, rounding toward `-∞`.
 ///
 axm %core.shr(a, l): {s: Nat} → «2; Idx s» → Idx s, normalize_shr;
 ///
@@ -135,6 +140,7 @@ axm %core.shr(a, l): {s: Nat} → «2; Idx s» → Idx s, normalize_shr;
 ///
 /// Integer operations that may overflow.
 /// You can specify the desired behavior in the case of an overflow with the curried argument just in front of the actual argument by providing a mim::plug::core::Mode as `Nat`.
+///
 /// `shl` uses the same shift-count rule as `%%core.shr`.
 /// It multiplies the unsigned representative by `2^b` and then wraps modulo `s`.
 /// `nuw` and `nsw` check the unwrapped unsigned and signed results, respectively.
@@ -246,8 +252,8 @@ axm %core.abs: {s: Nat} → [%mem.M 0, Idx s] → [%mem.M 0, Idx s], normalize_a
 /// ### %%core.conv
 ///
 /// Conversion between index types - both signed and unsigned - of different sizes.
-/// `conv.u` preserves the unsigned representative modulo the destination carrier.
-/// `conv.s` preserves the signed representative modulo the destination carrier.
+/// * `conv.u` preserves the unsigned representative modulo the destination carrier.
+/// * `conv.s` preserves the signed representative modulo the destination carrier.
 ///
 axm %core.conv(s, u): {ss: Nat} → [ds: Nat] → Idx ss → Idx ds, normalize_conv;
 ///

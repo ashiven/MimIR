@@ -70,7 +70,7 @@ constexpr std::string_view subview(std::string_view s, size_t i, size_t n = std:
 }
 
 /// Replaces all occurrences of @p what with @p repl.
-inline void find_and_replace(std::string& str, std::string_view what, std::string_view repl) noexcept {
+inline void find_and_replace(std::string& str, std::string_view what, std::string_view repl) {
     for (size_t pos = str.find(what); pos != std::string::npos; pos = str.find(what, pos + repl.size()))
         str.replace(pos, what.size(), repl);
 }
