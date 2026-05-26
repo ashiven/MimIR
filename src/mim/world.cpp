@@ -1,5 +1,7 @@
 #include "mim/world.h"
 
+#include <ranges>
+
 #include "mim/check.h"
 #include "mim/def.h"
 #include "mim/driver.h"
@@ -714,7 +716,10 @@ void World::for_each(bool elide_empty, std::function<void(Def*)> f) {
         const auto mut_nest = Nest(muts);
         auto schedule       = Scheduler::schedule(mut_nest);
         std::ranges::reverse(schedule);
-        for (auto* mut : schedule)
+        auto closed_schedule = schedule | std::views::filter([&](Def* mut) {
+                                   return mut->is_closed() && (!elide_empty || mut->is_set());
+                               });
+        for (auto* mut : closed_schedule)
             f(mut);
     } else {
         for (auto* mut : muts)
