@@ -64,6 +64,14 @@ constexpr u64 idx_from_signed(u64 size, s64 x) {
     return x >= 0 ? static_cast<u64>(x) : size - static_cast<u64>(-x);
 }
 
+constexpr u64 idx_from_signed_mod(u64 size, s64 x) {
+    if (size == 0) return static_cast<u64>(x);
+    if (x >= 0) return static_cast<u64>(x) % size;
+
+    auto rem = idx_signed_abs(x) % size;
+    return rem == 0 ? 0 : size - rem;
+}
+
 constexpr bool idx_add_nuw(u64 size, u64 a, u64 b) {
     if (size == 0) return a + b < a;
     return a > size - 1 - b;
@@ -855,9 +863,6 @@ const Def* normalize_conv(const Def* dst_t, const Def*, const Def* x) {
 
     if (s_t == d_t) return x;
     if (x->isa<Bot>()) return world.bot(d_t);
-    if constexpr (id == conv::s) {
-        if (ls && ld && *ld < *ls) return world.call(conv::u, d, x); // just truncate - we don't care for signedness
-    }
 
     if (auto l = Lit::isa(x); l && ls && ld) {
         if constexpr (id == conv::u) {
@@ -865,19 +870,7 @@ const Def* normalize_conv(const Def* dst_t, const Def*, const Def* x) {
             return world.lit(d_t, *l % *ld);
         }
 
-        auto sw = Idx::size2bitwidth(*ls);
-        auto dw = Idx::size2bitwidth(*ld);
-
-        // clang-format off
-        if (false) {}
-#define M(S, D) \
-        else if (S == sw && D == dw) return world.lit(d_t, w2s<D>(mim::bitcast_resize<w2s<S>>(*l)));
-        M( 1,  8) M( 1, 16) M( 1, 32) M( 1, 64)
-                  M( 8, 16) M( 8, 32) M( 8, 64)
-                            M(16, 32) M(16, 64)
-                                      M(32, 64)
-        else assert(false && "TODO: conversion between different Idx sizes");
-        // clang-format on
+        return world.lit(d_t, idx_from_signed_mod(*ld, idx_sext(*ls, *l)));
     }
 
     return {};

@@ -90,6 +90,18 @@ let _ = %refly.equiv.struc_eq (%core.shr.a (127I8, 1I8), 63I8);
 let _ = %refly.equiv.struc_eq (%core.shr.a (1I8, 1I8), 0I8);
 let _ = %refly.check_bot (%core.shr.a (1I8, 8I8));
 
+/// conv
+let _ = %refly.equiv.struc_eq (%core.conv.u i16 255I8, 255I16);
+let _ = %refly.equiv.struc_eq (%core.conv.s i16 255I8, 65535I16);
+let _ = %refly.equiv.struc_eq (%core.conv.u i8 65535I16, 255I8);
+let _ = %refly.equiv.struc_eq (%core.conv.s i8 65535I16, 255I8);
+let _ = %refly.equiv.struc_eq (%core.conv.u 10 4_5, 4_10);
+let _ = %refly.equiv.struc_eq (%core.conv.s 10 4_5, 9_10);
+let _ = %refly.equiv.struc_eq (%core.conv.s 10 3_5, 8_10);
+let _ = %refly.equiv.struc_eq (%core.conv.u 3 4_5, 1_3);
+let _ = %refly.equiv.struc_eq (%core.conv.s 3 4_5, 2_3);
+let _ = %refly.equiv.struc_eq (%core.conv.s 3 3_5, 1_3);
+
 /// word-domain icmp basic
 let _ = %refly.equiv.struc_eq (%core.icmp.e  (42I8, 42I8), tt);
 let _ = %refly.equiv.struc_eq (%core.icmp.ne (42I8, 43I8), tt);
