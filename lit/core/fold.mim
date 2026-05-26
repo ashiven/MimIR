@@ -153,6 +153,9 @@ let _ = %refly.equiv.struc_eq (%core.extrema.smax (254I8, 255I8), 255I8);
 let _ = %refly.equiv.struc_eq (%core.wrap.add 0 (0_1, 0_1), 0_1);
 let _ = %refly.equiv.struc_eq (%core.wrap.sub 0 (0_1, 0_1), 0_1);
 let _ = %refly.equiv.struc_eq (%core.wrap.mul 0 (0_1, 0_1), 0_1);
+let _ = %refly.equiv.struc_eq (%core.wrap.shl 0 (0_1, 0_1), 0_1);
+let _ = %refly.equiv.struc_eq (%core.shr.l (0_1, 0_1), 0_1);
+let _ = %refly.equiv.struc_eq (%core.shr.a (0_1, 0_1), 0_1);
 let _ = %refly.equiv.struc_eq (%core.extrema.umin (0_1, 0_1), 0_1);
 let _ = %refly.equiv.struc_eq (%core.extrema.umax (0_1, 0_1), 0_1);
 let _ = %refly.equiv.struc_eq (%core.icmp.e  (0_1, 0_1), tt);
@@ -174,18 +177,34 @@ let _ = %refly.equiv.struc_eq (%core.wrap.add 0 (3_5, 4_5), 2_5);
 let _ = %refly.equiv.struc_eq (%core.wrap.sub 0 (0_5, 1_5), 4_5);
 let _ = %refly.equiv.struc_eq (%core.wrap.sub 0 (2_5, 4_5), 3_5);
 let _ = %refly.equiv.struc_eq (%core.wrap.mul 0 (3_5, 4_5), 2_5);
+let _ = %refly.equiv.struc_eq (%core.wrap.shl 0 (1_5, 1_5), 2_5);
+let _ = %refly.equiv.struc_eq (%core.wrap.shl 0 (4_5, 1_5), 3_5);
+let _ = %refly.equiv.struc_eq (%core.wrap.shl 0 (3_5, 2_5), 2_5);
 let _ = %refly.equiv.struc_eq (%core.wrap.add %core.mode.nuw (1_5, 2_5), 3_5);
 let _ = %refly.equiv.struc_eq (%core.wrap.sub %core.mode.nuw (4_5, 2_5), 2_5);
 let _ = %refly.equiv.struc_eq (%core.wrap.mul %core.mode.nuw (2_5, 2_5), 4_5);
+let _ = %refly.equiv.struc_eq (%core.wrap.shl %core.mode.nuw (1_5, 1_5), 2_5);
+let _ = %refly.equiv.struc_eq (%core.wrap.shl %core.mode.nsw (1_5, 1_5), 2_5);
 let _ = %refly.check_bot (%core.wrap.add %core.mode.nuw (4_5, 1_5));
 let _ = %refly.check_bot (%core.wrap.sub %core.mode.nuw (0_5, 1_5));
 let _ = %refly.check_bot (%core.wrap.mul %core.mode.nuw (3_5, 4_5));
 let _ = %refly.check_bot (%core.wrap.add %core.mode.nsw (1_5, 2_5));
+let _ = %refly.equiv.struc_eq (%core.shr.l (4_5, 1_5), 2_5);
+let _ = %refly.equiv.struc_eq (%core.shr.a (4_5, 1_5), 4_5);
+let _ = %refly.equiv.struc_eq (%core.shr.a (3_5, 1_5), 4_5);
+let _ = %refly.check_bot (%core.wrap.shl %core.mode.nuw (4_5, 1_5));
+let _ = %refly.check_bot (%core.wrap.shl %core.mode.nsw (2_5, 1_5));
+let _ = %refly.check_bot (%core.wrap.shl 0 (1_5, 3_5));
+let _ = %refly.check_bot (%core.shr.l (4_5, 3_5));
+let _ = %refly.check_bot (%core.shr.a (4_5, 3_5));
 
 /// non-power-of-two arithmetic on Idx 10
 let _ = %refly.equiv.struc_eq (%core.wrap.add 0 (9_10, 1_10), 0_10);
 let _ = %refly.equiv.struc_eq (%core.wrap.sub 0 (0_10, 1_10), 9_10);
 let _ = %refly.equiv.struc_eq (%core.wrap.mul 0 (7_10, 8_10), 6_10);
+let _ = %refly.equiv.struc_eq (%core.wrap.shl 0 (7_10, 2_10), 8_10);
+let _ = %refly.equiv.struc_eq (%core.shr.l (9_10, 3_10), 1_10);
+let _ = %refly.equiv.struc_eq (%core.shr.a (9_10, 3_10), 9_10);
 
 /// extra edge checks for arbitrary icmp partitions
 let _ = %refly.equiv.struc_eq (%core.icmp.e   (4_5, 4_5), tt);
@@ -201,10 +220,7 @@ let _ = %refly.equiv.struc_eq (%core.icmp.sge (8_9, 5_9), tt);
 let _ = %refly.equiv.struc_eq (%core.icmp.ule (5_9, 8_9), tt);
 let _ = %refly.equiv.struc_eq (%core.icmp.uge (8_9, 5_9), tt);
 
-/// non-power-of-two unsupported signed/div/shift cases should bottom
-let _ = %refly.check_bot (%core.wrap.shl 0 (1_5, 1_5));
-let _ = %refly.check_bot (%core.shr.l (4_5, 1_5));
-let _ = %refly.check_bot (%core.shr.a (4_5, 1_5));
+/// non-power-of-two unsupported signed division cases should bottom
 
 lam div_rem (m: %mem.M 0): %mem.M 0 =
     /// word-domain div.udiv
@@ -260,5 +276,16 @@ lam div_rem (m: %mem.M 0): %mem.M 0 =
     let (m, s) = %core.div.srem (m, (9223372036854775808I64, 18446744073709551615I64));
     let _ = %refly.check_bot r;
     let _ = %refly.check_bot s;
+
+    /// abs
+    let (m, _) = %refly.equiv.struc_eq (%core.abs (m, 0I8), (m, 0I8));
+    let (m, _) = %refly.equiv.struc_eq (%core.abs (m, 255I8), (m, 1I8));
+    let (m, _) = %refly.equiv.struc_eq (%core.abs (m, 128I8), (m, 128I8));
+    let (m, _) = %refly.equiv.struc_eq (%core.abs (m, 0_1), (m, 0_1));
+    let (m, _) = %refly.equiv.struc_eq (%core.abs (m, 4_5), (m, 1_5));
+    let (m, _) = %refly.equiv.struc_eq (%core.abs (m, 3_5), (m, 2_5));
+    let (m, _) = %refly.equiv.struc_eq (%core.abs (m, 9_10), (m, 1_10));
+    let (m, _) = %refly.equiv.struc_eq (%core.abs (m, 5_10), (m, 5_10));
+    let (m, _) = %refly.equiv.struc_eq (%core.abs (m, 9223372036854775808I64), (m, 9223372036854775808I64));
 
     m;

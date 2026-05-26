@@ -123,7 +123,11 @@ axm %core.bit2( f,      nor, nciff, nfst, niff, nsnd, xor_, nand,
 /// Shift right:
 ///     * [`a`rithmetic shift right](https://en.wikipedia.org/wiki/Arithmetic_shift)
 ///     * [`l`ogical shift right](https://en.wikipedia.org/wiki/Logical_shift)
-/// @todo Add ype constraint that shr is only allowed for powers of two.
+/// For `Idx s`, the shift count must be smaller than the minimal bit width needed to encode the carrier.
+/// For `Idx ⊤`, this width is `64`; otherwise it is `max(1, ceil(log2(s)))`.
+/// Larger counts are undefined behavior.
+/// `shr.l` divides the unsigned representative by `2^b`.
+/// `shr.a` divides the signed representative by `2^b`, rounding toward `-∞`.
 ///
 axm %core.shr(a, l): {s: Nat} → «2; Idx s» → Idx s, normalize_shr;
 ///
@@ -131,7 +135,9 @@ axm %core.shr(a, l): {s: Nat} → «2; Idx s» → Idx s, normalize_shr;
 ///
 /// Integer operations that may overflow.
 /// You can specify the desired behavior in the case of an overflow with the curried argument just in front of the actual argument by providing a mim::plug::core::Mode as `Nat`.
-/// @todo Add ype constraint that shl is only allowed for powers of two.
+/// `shl` uses the same shift-count rule as `%%core.shr`.
+/// It multiplies the unsigned representative by `2^b` and then wraps modulo `s`.
+/// `nuw` and `nsw` check the unwrapped unsigned and signed results, respectively.
 axm %core.wrap(add, sub, mul, shl): {s: Nat} → [m: Nat] → «2; Idx s» → Idx s, normalize_wrap;
 
 lam %core.minus {s: Nat} (m: Nat) (a: Idx s): Idx s = %core.wrap.sub m (0:(Idx s), a);
