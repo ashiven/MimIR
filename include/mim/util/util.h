@@ -1,9 +1,17 @@
 #pragma once
 
+#include <cstdint>
+#include <cstring>
+
+#include <algorithm>
 #include <bit>
+#include <iterator>
 #include <queue>
 #include <stack>
+#include <string>
+#include <string_view>
 #include <type_traits>
+#include <utility>
 
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
@@ -31,15 +39,6 @@ constexpr D bitcast_resize(const S& src) noexcept
         std::memcpy(&dst, &src, n);
         return dst;
     }
-}
-
-template<class T>
-constexpr bool get_sign(T val) noexcept {
-    static_assert(std::is_integral<T>(), "get_sign only supported for signed and unsigned integer types");
-    if constexpr (std::is_signed<T>())
-        return val < 0;
-    else
-        return val >> (T(sizeof(val)) * T(8) - T(1));
 }
 
 constexpr std::uint64_t pad(std::uint64_t offset, std::uint64_t align) noexcept {
@@ -121,32 +120,6 @@ auto assert_emplace(C& container, Args&&... args) {
     return i;
 }
 ///@}
-
-template<class Set>
-class unique_stack {
-public:
-    using T = typename std::remove_reference_t<Set>::value_type;
-
-    bool push(T val) {
-        if (done_.emplace(val).second) {
-            stack_.emplace(val);
-            return true;
-        }
-        return false;
-    }
-
-    bool empty() const { return stack_.empty(); }
-    const T& top() { return stack_.top(); }
-    T pop() { return mim::pop(stack_); }
-    void clear() {
-        done_.clear();
-        stack_ = {};
-    }
-
-private:
-    Set done_;
-    std::stack<T> stack_;
-};
 
 template<class Set>
 class unique_queue {
