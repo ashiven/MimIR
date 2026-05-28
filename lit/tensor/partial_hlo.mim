@@ -1,4 +1,4 @@
-// RUN: %mim %s -O0 -p direct -p affine
+// RUN: %mim %s -o - | FileCheck %s
 plugin tensor;
 plugin refly;
 plugin core;
@@ -71,3 +71,5 @@ con extern main_hlo [arg0: «784; «1024; F32»», arg1: «1024; F32», arg2: «
     // let v_19 = ‹128; v_cst_1›;
     // let v_20 = F32_maximum (v_19, v_18);
     return (v_18);
+
+// CHECK-NOT: %tensor.
