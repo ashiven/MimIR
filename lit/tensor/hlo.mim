@@ -1,4 +1,4 @@
-// RUN: %mim %s -O0 -p direct -p affine
+// RUN: %mim %s -p direct -p affine -o - | FileCheck %s
 plugin tensor;
 plugin refly;
 plugin core;
@@ -134,3 +134,14 @@ fun extern main_hlo [arg0: «784; «1024; F32»», arg1: «1024; F32», arg2: «
     let v_91 = F32_sub (arg5, v_90);
     return (v_76, v_79, v_82, v_85, v_88, v_91);
     /// return (v_76, arg1, arg2, arg3, arg4, arg5);
+
+lam extern _compile (): %compile.Phase =
+    %compile.phases ff (
+        %compile.internal_cleanup_phase,
+        %tensor.lower_tensor,
+        %tensor.fuse_tensor,
+        %tensor.lower_map_reduce,
+        %compile.internal_cleanup_phase,
+    );
+
+// CHECK-NOT: %tensor.map_reduce

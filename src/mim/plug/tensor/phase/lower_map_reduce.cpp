@@ -106,7 +106,10 @@ const Def* LowerMapReduce::lower_set(const App* app) {
 }
 
 const Def* LowerMapReduce::rec_broadcast(const Def* s_in, const Def* s_out, const Def* input, u64 r, u64 i) {
-    auto& w      = new_world();
+    auto& w = new_world();
+    // Base case: all dimensions have been processed; `input` is the final scalar.
+    if (i == r) return input;
+
     auto s_in_ri = s_in->proj(r, i), s_out_ri = s_out->proj(r, i);
     w.DLOG("rec_broadcast");
     w.DLOG("    r = {}", r);
@@ -114,8 +117,6 @@ const Def* LowerMapReduce::rec_broadcast(const Def* s_in, const Def* s_out, cons
     w.DLOG("    s_in_ri = {} : {}", s_in_ri, s_in_ri->type());
     w.DLOG("    s_out_ri = {} : {}", s_out_ri, s_out_ri->type());
     w.DLOG("    input = {} : {}", input, input->type());
-
-    if (i + 1 == r) return input;
 
     if (s_in_ri == s_out_ri) {
         if (auto s_in_lit = s_in_ri->isa<Lit>()) {
