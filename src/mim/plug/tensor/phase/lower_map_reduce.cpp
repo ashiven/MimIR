@@ -341,19 +341,17 @@ const Def* LowerMapReduce::lower_map_reduce(const App* app) {
     auto type   = rewrite(app->type());
     auto callee = c->as<App>();
 
-    auto subs = callee->arg();
+    auto [nis, ToRo, So, TisRisSis, comb_init, subs] = callee->uncurry_args<6>();
 
-    auto [comb, zero]    = callee->decurry()->args<2>();
-    auto [Tis, Ris, Sis] = callee->decurry()->decurry()->args<3>();
-    auto S               = callee->decurry()->decurry()->decurry()->arg();
-    auto [T, n]          = callee->decurry()->decurry()->decurry()->decurry()->args<2>();
-    auto nis             = callee->decurry()->decurry()->decurry()->decurry()->decurry()->arg();
+    auto [comb, zero]    = comb_init->projs<2>();
+    auto [Tis, Ris, Sis] = TisRisSis->projs<3>();
+    auto [T, n]          = ToRo->projs<2>();
 
     w.DLOG("lower map_reduce");
     w.DLOG("type : {}", type);
     w.DLOG("meta variables:");
     w.DLOG("  n = {}", n);
-    w.DLOG("  S = {}", S);
+    w.DLOG("  S = {}", So);
     w.DLOG("  T = {}", T);
     w.DLOG("  nis = {}", nis);
     w.DLOG("  Ris = {} : {}", Ris, Ris->type());
@@ -391,7 +389,7 @@ const Def* LowerMapReduce::lower_map_reduce(const App* app) {
 
     try {
         // out-indices are loops (potentially parallel) over the output tensor, in-indices are reductions
-        auto [in_indices, out_indices, dims, n_input] = extract_indices(n_nat, nis_nat, S, Ris, Sis, subs);
+        auto [in_indices, out_indices, dims, n_input] = extract_indices(n_nat, nis_nat, So, Ris, Sis, subs);
 
         for (auto idx : out_indices)
             w.ILOG("output index {} with dim {}", idx, dims[idx]);

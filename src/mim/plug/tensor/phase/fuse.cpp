@@ -31,15 +31,26 @@ namespace mim::plug::tensor::phase {
 // post-order — each starting from its own init — and finally invokes `f_o`, threading inner
 // results into the corresponding outer input slots.
 const Def* Fuse::fuse_map_reduce(const App* app) {
-    auto outer_callee = app->callee()->as<App>();
+    auto outer_callee = rewrite(app->callee())->as<App>();
 
-    auto subs            = rewrite(outer_callee->arg());
-    auto [comb, init]    = rewrite(outer_callee->decurry()->arg())->projs<2>();
-    auto [Tis, Ris, Sis] = rewrite(outer_callee->decurry()->decurry()->arg())->projs<3>();
-    auto So              = rewrite(outer_callee->decurry()->decurry()->decurry()->arg());
-    auto [To, Ro]        = rewrite(outer_callee->decurry()->decurry()->decurry()->decurry()->arg())->projs<2>();
-    auto nis             = rewrite(outer_callee->decurry()->decurry()->decurry()->decurry()->decurry()->arg());
+    auto [nis, ToRo, So, TisRisSis, comb_init, subs] = outer_callee->uncurry_args<6>();
+
+    auto [comb, init]    = comb_init->projs<2>();
+    auto [Tis, Ris, Sis] = TisRisSis->projs<3>();
+    auto [To, Ro]        = ToRo->projs<2>();
     auto is              = rewrite(app->arg());
+
+    app->world().DLOG("considering map_reduce for fusion:");
+    app->world().DLOG("  subs = {} : {}", subs, subs->type());
+    app->world().DLOG("  comb = {} : {}", comb, comb->type());
+    app->world().DLOG("  init = {} : {}", init, init->type());
+    app->world().DLOG("  Tis = {} : {}", Tis, Tis->type());
+    app->world().DLOG("  Ris = {} : {}", Ris, Ris->type());
+    app->world().DLOG("  Sis = {} : {}", Sis, Sis->type());
+    app->world().DLOG("  To = {} : {}", To, To->type());
+    app->world().DLOG("  Ro = {} : {}", Ro, Ro->type());
+    app->world().DLOG("  nis = {} : {}", nis, nis->type());
+    app->world().DLOG("  is = {} : {}", is, is->type());
 
     auto nis_lit = nis->isa<Lit>();
     if (!nis_lit) return nullptr;
@@ -69,13 +80,10 @@ const Def* Fuse::fuse_map_reduce(const App* app) {
         auto inner   = Axm::isa<tensor::map_reduce>(input_k);
         if (!inner) continue;
 
-        auto inner_callee                      = inner->callee()->as<App>();
-        auto inner_subs                        = inner_callee->arg();
-        auto [inner_comb, inner_init]          = inner_callee->decurry()->args<2>();
-        auto [inner_Tis, inner_Ris, inner_Sis] = inner_callee->decurry()->decurry()->args<3>();
-        auto [inner_To, inner_Ro]              = inner_callee->decurry()->decurry()->decurry()->decurry()->args<2>();
-        auto inner_nis = inner_callee->decurry()->decurry()->decurry()->decurry()->decurry()->arg();
-        auto inner_is  = inner->arg();
+        auto [inner_nis, inner_ToRo, inner_So, inner_TisRisSis, inner_comb_init, inner_subs, inner_is] = inner->uncurry_args<7>();
+        auto [inner_comb, inner_init]          = inner_comb_init->projs<2>();
+        auto [inner_Tis, inner_Ris, inner_Sis] = inner_TisRisSis->projs<3>();
+        auto [inner_To, inner_Ro]              = inner_ToRo->projs<2>();
 
         auto inner_nis_lit = inner_nis->isa<Lit>();
         auto inner_Ro_lit  = inner_Ro->isa<Lit>();
