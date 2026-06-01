@@ -7,6 +7,7 @@
 
 #include "mim/plug/tensor/tensor.h"
 
+#include "absl/container/btree_set.h"
 #include "absl/container/flat_hash_set.h"
 
 namespace mim::plug::tensor::phase {
@@ -64,7 +65,7 @@ const Def* Lower::lower_broadcast_in_dim(const App* app) {
     });
     auto s_tr     = w.tuple(s_tr_vec);
 
-    absl::flat_hash_set<u64> set_perm;
+    absl::btree_set<u64> set_perm;
     absl::flat_hash_map<u64, u64> map_perm;
     for (u64 i = 0; i < r_out_nat; ++i)
         set_perm.insert(i);
