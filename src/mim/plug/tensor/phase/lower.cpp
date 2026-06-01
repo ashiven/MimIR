@@ -6,6 +6,7 @@
 #include "mim/util/types.h"
 
 #include "mim/plug/tensor/tensor.h"
+
 #include "absl/container/flat_hash_set.h"
 
 namespace mim::plug::tensor::phase {
@@ -50,12 +51,12 @@ const Def* Lower::lower_broadcast_in_dim(const App* app) {
     DLOG("    r_out = {} : {}", r_out, r_out->type());
     DLOG("    s_in = {} : {}", s_in, s_in->type());
 
-    auto r_in_lit = r_in->isa<Lit>();
+    auto r_in_lit = Lit::isa<u64>(r_in);
     if (!r_in_lit) return nullptr;
-    auto r_in_nat  = r_in_lit->get<u64>();
-    auto r_out_lit = r_out->isa<Lit>();
+    auto r_out_lit = Lit::isa<u64>(r_out);
     if (!r_out_lit) return nullptr;
-    auto r_out_nat = r_out_lit->get<u64>();
+    auto r_out_nat = *r_out_lit;
+    auto r_in_nat  = *r_in_lit;
 
     auto s_tr_vec = DefVec(r_out_nat, [&](size_t i) {
         if (i < r_in_nat) return s_in->proj(r_in_nat, i);
@@ -77,9 +78,8 @@ const Def* Lower::lower_broadcast_in_dim(const App* app) {
 
         set_perm.erase(idx_nat);
     }
-    u64 j = r_in_nat;
-    for (auto i = set_perm.begin(); i != set_perm.end(); i++) {
-        map_perm[*i] = j;
+    for (u64 j = r_in_nat; auto i : set_perm) {
+        map_perm[i] = j;
         j++;
     }
     auto permutation_vec = DefVec(r_out_nat, [&](size_t i) { return w.lit_idx(r_out_nat, map_perm[i]); });

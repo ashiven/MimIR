@@ -31,22 +31,18 @@ const Def* LowerMapReduce::lower_get(const App* app) {
     DLOG("    r = {} : {}", r, r->type());
     DLOG("    s = {} : {}", s, s->type());
 
-    auto size = index->num_projs();
-    DLOG("size = {}", size);
-    if (size == 1) {
-        DLOG("index of size 1, extract");
-        return w.extract(arr, index);
-    }
-
-    auto r_lit = r->isa<Lit>();
-    if (!r_lit) {
+    auto r_nat = Lit::isa<u64>(r);
+    if (!r_nat) {
         WLOG("{} doesn't have a lowering-time known rank: {}", app, r);
         return nullptr;
     }
-    auto r_nat    = r_lit->get<u64>();
+    if (r_nat == 1) {
+        DLOG("index of size 1, extract");
+        return w.extract(arr, index);
+    }
     auto curr_arr = arr;
-    for (auto ri = 0_u64; ri < r_nat; ++ri) {
-        auto idx = index->proj(r_nat, ri);
+    for (auto ri = 0_u64; ri < *r_nat; ++ri) {
+        auto idx = index->proj(*r_nat, ri);
         DLOG("    idx = {} : {}", idx, idx->type());
         curr_arr = w.extract(curr_arr, idx);
     }
@@ -65,38 +61,34 @@ const Def* LowerMapReduce::lower_set(const App* app) {
     DLOG("    index = {} : {}", index, index->type());
     DLOG("    x = {} : {}", x, x->type());
 
-    auto size = index->num_projs();
-    DLOG("    size = {}", size);
-    if (size == 1) {
-        DLOG("index of size 1, insert");
-        return w.insert(arr, index, x);
-    }
-
     auto callee    = c->as<App>();
     auto [T, r, s] = callee->args<3>();
     DLOG("    T = {} : {}", T, T->type());
     DLOG("    r = {} : {}", r, r->type());
     DLOG("    s = {} : {}", s, s->type());
 
-    auto r_lit = r->isa<Lit>();
-    if (!r_lit) {
+    auto r_nat = Lit::isa<u64>(r);
+    if (!r_nat) {
         WLOG("{} doesn't have a lowering-time known rank: {}", app, r);
         return nullptr;
     }
+    if (r_nat == 1) {
+        DLOG("index of size 1, insert");
+        return w.insert(arr, index, x);
+    }
 
     // r_nat will never be 0, as we would have normalized this case away already
-    auto r_nat = r_lit->get<u64>();
-    DefVec arrs_to_insert_into(r_nat);
+    DefVec arrs_to_insert_into(*r_nat);
     arrs_to_insert_into[0] = arr;
-    for (auto ri = 0_u64; ri < r_nat - 1; ++ri) {
-        auto idx = index->proj(r_nat, ri);
+    for (auto ri = 0_u64; ri < *r_nat - 1; ++ri) {
+        auto idx = index->proj(*r_nat, ri);
         DLOG("    extract idx = {} : {}", idx, idx->type());
         arrs_to_insert_into[ri + 1] = w.extract(arrs_to_insert_into[ri], idx);
     }
 
     auto new_arr = x;
-    for (auto ri = static_cast<s64>(r_nat - 1); ri >= 0; --ri) {
-        auto idx = index->proj(r_nat, ri);
+    for (auto ri = static_cast<s64>(*r_nat - 1); ri >= 0; --ri) {
+        auto idx = index->proj(*r_nat, ri);
         DLOG("    idx = {} : {}", idx, idx->type());
         DLOG("    arr_to_insert_into = {} : {}", arrs_to_insert_into[ri], arrs_to_insert_into[ri]->type());
 
@@ -119,20 +111,19 @@ const Def* LowerMapReduce::rec_broadcast(const Def* s_in, const Def* s_out, cons
     DLOG("    input = {} : {}", input, input->type());
 
     if (s_in_ri == s_out_ri) {
-        if (auto s_in_lit = s_in_ri->isa<Lit>()) {
-            DefVec inputs(s_in_lit->get<u64>(),
-                          [&](size_t j) { return rec_broadcast(s_in, s_out, input->proj(j), r, i + 1); });
+        if (auto s_in_lit = Lit::isa<u64>(s_in_ri)) {
+            DefVec inputs(*s_in_lit, [&](size_t j) { return rec_broadcast(s_in, s_out, input->proj(j), r, i + 1); });
             return w.tuple(inputs);
         } else {
             // TODO: we could probably support non-literal sizes as well, but we would need to generate loops to copy
             // the data instead of just packing it.
             WLOG("dimension {} of the input and output are equal but not literal: {} : {}", i, s_in_ri,
-                   s_in_ri->type());
+                 s_in_ri->type());
             return nullptr;
         }
     }
 
-    if (auto s_in_lit = s_in_ri->isa<Lit>(); s_in_lit && s_in_lit->get<u64>() == 1) {
+    if (auto s_in_lit = Lit::isa<u64>(s_in_ri); s_in_lit && *s_in_lit == 1) {
         DLOG("dimension {} of the input is 1, can be broadcasted to dimension {} of the output", i, s_out_ri);
         return w.pack(s_out_ri, rec_broadcast(s_in, s_out, input, r, i + 1));
     }
@@ -156,25 +147,22 @@ const Def* LowerMapReduce::lower_broadcast(const App* app) {
     DLOG("    r = {} : {}", r, r->type());
     DLOG("    s_in = {} : {}", s_in, s_in->type());
 
-    auto r_lit = r->isa<Lit>();
-    if (!r_lit) {
+    auto r_nat = Lit::isa<u64>(r);
+    if (!r_nat) {
         WLOG("{} doesn't have a lowering-time known rank: {}", app, r);
         return nullptr;
     }
     // r_nat will never be 0, as we would have normalized this case away already
-    auto r_nat = r_lit->get<u64>();
-
     if (s_in == s_out) return input;
 
-    if (r_nat == 1) {
-        if (auto s_in_lit = s_in->isa<Lit>()) {
-            auto s_in_nat = s_in_lit->get<u64>();
-            assert(s_in_nat == 1 && "input dimensions must be 1 or equal to the output dimension");
+    if (*r_nat == 1) {
+        if (auto s_in_lit = Lit::isa<u64>(s_in)) {
+            assert(*s_in_lit == 1 && "input dimensions must be 1 or equal to the output dimension");
             return w.pack(s_out, input);
         }
     }
 
-    auto result = rec_broadcast(s_in, s_out, input, r_nat, 0);
+    auto result = rec_broadcast(s_in, s_out, input, *r_nat, 0);
     DLOG("result of rec_broadcast = {} : {}", result, result->type());
     return result;
 }
@@ -214,10 +202,7 @@ extract_indices(const u64 n_nat, const u64 nis_nat, const Def* S, const Def* Ris
     for (u64 i = 0; i < nis_nat; ++i) {
         auto ni     = Ris->proj(nis_nat, i);
         auto ni_lit = Lit::isa(ni);
-        if (!ni_lit) {
-            w.DLOG("matrix {} has non-constant dimension count", i);
-            throw std::runtime_error("matrix has non-constant dimension count");
-        }
+        if (!ni_lit) error("matrix {} has non-constant dimension count", i);
         u64 ni_nat = *ni_lit;
         w.DLOG("  dims({}) = {}", i, ni_nat);
         auto Sis_i = Sis->proj(nis_nat, i);
@@ -240,10 +225,7 @@ extract_indices(const u64 n_nat, const u64 nis_nat, const Def* S, const Def* Ris
         for (u64 j = 0; j < n_input[i]; ++j) {
             auto idx     = indices->proj(n_input[i], j);
             auto idx_lit = Lit::isa(idx);
-            if (!idx_lit) {
-                w.DLOG("    index {} {} is not a literal", i, j);
-                throw std::runtime_error("index is not a literal");
-            }
+            if (!idx_lit) error("index {} {} is not a literal", i, j);
             u64 idx_nat = *idx_lit;
             auto dim    = input_dims[i][j];
             w.DLOG("      index {} = {}", j, idx);
@@ -255,18 +237,17 @@ extract_indices(const u64 n_nat, const u64 nis_nat, const Def* S, const Def* Ris
                 auto prev_dim = dims[idx_nat];
                 w.DLOG("        prev dim {} = {}", idx_nat, prev_dim);
                 // override with more precise information
-                if (auto dim_lit = dim->isa<Lit>()) {
-                    if (auto prev_dim_lit = prev_dim->isa<Lit>()) {
+                if (auto dim_lit = Lit::isa<u64>(dim)) {
+                    if (auto prev_dim_lit = Lit::isa<u64>(prev_dim)) {
                         if (dim != prev_dim) {
-                            if (!dim_lit) throw std::runtime_error("dimension is not a literal");
-                            if (!prev_dim_lit) throw std::runtime_error("previous dimension is not a literal");
-                            assert(dim_lit->get<u64>() == prev_dim_lit->get<u64>() && "dimensions must be equal");
+                            if (!dim_lit) error("dimension {} is not a literal", dim);
+                            if (!prev_dim_lit) error("previous dimension {} is not a literal", prev_dim);
+                            assert(*dim_lit == *prev_dim_lit && "dimensions must be equal");
                         }
                     } else
                         dims[idx_nat] = dim;
                 } else if (dim != prev_dim) {
-                    w.DLOG("dimensions {} and {} must be equal", dim, prev_dim);
-                    throw std::runtime_error("dimensions must be equal");
+                    error("dimensions {} and {} must be equal", dim, prev_dim);
                 }
             }
         }
@@ -377,15 +358,15 @@ const Def* LowerMapReduce::lower_map_reduce(const App* app) {
     // return matrix
     // ```
 
-    auto n_lit   = n->isa<Lit>();
-    auto nis_lit = nis->isa<Lit>();
+    auto n_lit   = Lit::isa<u64>(n);
+    auto nis_lit = Lit::isa<u64>(nis);
     if (!n_lit || !nis_lit) {
         DLOG("n or nis is not a literal");
         return nullptr;
     }
 
-    auto n_nat   = n_lit->get<u64>();   // number of output dimensions (in S)
-    auto nis_nat = nis_lit->get<u64>(); // number of input matrices
+    auto n_nat   = *n_lit;   // number of output dimensions (in S)
+    auto nis_nat = *nis_lit; // number of input matrices
 
     try {
         // out-indices are loops (potentially parallel) over the output tensor, in-indices are reductions
@@ -454,9 +435,11 @@ const Def* LowerMapReduce::lower_map_reduce(const App* app) {
         for (u64 i = 0; i < n_nat; ++i) {
             auto idx = out_indices[i];
             if (idx != i) error("output indices must be consecutive 0..n-1 but {} != {}", idx, i);
-            if (dims[idx]->isa<Lit>() && dims[idx]->as<Lit>()->get<u64>() == 1) {
-                DLOG("dimension {} is 1, no iterator needed", idx);
-                continue;
+            if (auto dim_lit = Lit::isa<u64>(dims[idx])) {
+                if (*dim_lit == 1) {
+                    DLOG("dimension {} is 1, no iterator needed", idx);
+                    continue;
+                }
             }
             output_iterators.push_back(iterator[idx]);
         }
@@ -506,9 +489,9 @@ const Def* LowerMapReduce::lower_map_reduce(const App* app) {
             auto indices         = input_idx_tup->projs(n_input[i]);
             auto input_iterators = DefVec(n_input[i], [&](u64 j) {
                 auto idx     = indices[j];
-                auto idx_lit = idx->as<Lit>()->get<u64>();
-                DLOG("  idx {} {} = {}", i, j, idx_lit);
-                return iterator[idx_lit];
+                auto idx_lit = Lit::isa<u64>(idx);
+                DLOG("  idx {} {} = {}", i, j, *idx_lit);
+                return iterator[*idx_lit];
             });
 
             auto curr_mat = input_matrix;

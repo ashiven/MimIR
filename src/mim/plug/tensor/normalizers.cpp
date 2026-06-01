@@ -24,8 +24,8 @@ std::tuple<u64, const Def*, const Def*> fold_shape_and_index(const Def* shape, c
     auto r = shape->num_projs();
     for (size_t i = 0, e = r; i != e; ++i) {
         auto dim = shape->proj(r, i);
-        if (auto dim_lit = dim->isa<Lit>())
-            if (dim_lit->get<u64>() == 1) continue;
+        if (auto dim_lit = Lit::isa<u64>(dim))
+            if (dim_lit == 1) continue;
 
         dims.push_back(dim);
         index_dims.push_back(index->proj(r, i));
@@ -163,9 +163,8 @@ const Def* normalize_broadcast(const Def*, const Def* c, const Def* arg) {
 
     if (s_in == s_out) return input;
 
-    auto r_lit = r->isa<Lit>();
-    if (!r_lit) return nullptr;
-    auto r_nat = r_lit->get<u64>();
+    auto r_nat = Lit::isa<u64>(r);
+    if (!r_nat) return nullptr;
     if (r_nat == 0) return input;
 
     return nullptr;

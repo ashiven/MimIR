@@ -52,9 +52,9 @@ const Def* Fuse::fuse_map_reduce(const App* app) {
     DLOG("  nis = {} : {}", nis, nis->type());
     DLOG("  is = {} : {}", is, is->type());
 
-    auto nis_lit = nis->isa<Lit>();
+    auto nis_lit = Lit::isa<u64>(nis);
     if (!nis_lit) return nullptr;
-    auto nis_nat = nis_lit->get<u64>();
+    auto nis_nat = *nis_lit;
 
     struct InnerInfo {
         bool fusible    = false;
@@ -85,27 +85,25 @@ const Def* Fuse::fuse_map_reduce(const App* app) {
         auto [inner_Tis, inner_Ris, inner_Sis] = inner_TisRisSis->projs<3>();
         auto [inner_To, inner_Ro]              = inner_ToRo->projs<2>();
 
-        auto inner_nis_lit = inner_nis->isa<Lit>();
-        auto inner_Ro_lit  = inner_Ro->isa<Lit>();
-        if (!inner_nis_lit || !inner_Ro_lit) continue;
-        auto inner_nis_nat = inner_nis_lit->get<u64>();
-        auto inner_Ro_nat  = inner_Ro_lit->get<u64>();
+        auto inner_nis_nat = Lit::isa<u64>(inner_nis);
+        auto inner_Ro_nat  = Lit::isa<u64>(inner_Ro);
+        if (!inner_nis_nat || !inner_Ro_nat) continue;
 
         // We can only fuse when the inner has no reduction dimensions, i.e. all subs are < Ro_i.
         // In that case the inner tensor at any position is just a single call of `inner_comb`.
-        Vector<u64> inner_Ris_nats(inner_nis_nat);
+        Vector<u64> inner_Ris_nats(*inner_nis_nat);
         bool fusible = true;
-        for (u64 l = 0; l < inner_nis_nat && fusible; ++l) {
-            auto Ris_l_lit = Lit::isa(inner_Ris->proj(inner_nis_nat, l));
+        for (u64 l = 0; l < *inner_nis_nat && fusible; ++l) {
+            auto Ris_l_lit = Lit::isa<u64>(inner_Ris->proj(*inner_nis_nat, l));
             if (!Ris_l_lit) {
                 fusible = false;
                 break;
             }
             inner_Ris_nats[l] = *Ris_l_lit;
-            auto inner_subs_l = inner_subs->proj(inner_nis_nat, l);
+            auto inner_subs_l = inner_subs->proj(*inner_nis_nat, l);
             for (u64 j = 0; j < inner_Ris_nats[l]; ++j) {
-                auto idx_lit = Lit::isa(inner_subs_l->proj(inner_Ris_nats[l], j));
-                if (!idx_lit || *idx_lit >= inner_Ro_nat) {
+                auto idx_lit = Lit::isa<u64>(inner_subs_l->proj(inner_Ris_nats[l], j));
+                if (!idx_lit || *idx_lit >= *inner_Ro_nat) {
                     fusible = false;
                     break;
                 }
@@ -114,7 +112,7 @@ const Def* Fuse::fuse_map_reduce(const App* app) {
         if (!fusible) continue;
 
         // We need the outer subs for input `k` to be indexable by literal positions.
-        auto Ris_k_lit = Lit::isa(Ris->proj(nis_nat, k));
+        auto Ris_k_lit = Lit::isa<u64>(Ris->proj(nis_nat, k));
         if (!Ris_k_lit) continue;
 
         auto& info         = infos[k];
@@ -126,7 +124,7 @@ const Def* Fuse::fuse_map_reduce(const App* app) {
         info.Ris           = inner_Ris;
         info.Sis           = inner_Sis;
         info.To            = inner_To;
-        info.nis           = inner_nis_nat;
+        info.nis           = *inner_nis_nat;
         info.is            = inner_is;
         info.Ris_nats      = std::move(inner_Ris_nats);
         info.outer_Ris_nat = *Ris_k_lit;
