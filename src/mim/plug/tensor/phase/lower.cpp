@@ -127,7 +127,7 @@ const Def* Lower::rewrite_imm_App(const App* app) {
     } else if (Axm::isa<tensor::select>(app)) {
         return lower_via_impl(app, w.annex<tensor::select_impl>());
     }
-    return Rewriter::rewrite_imm_App(app);
+    return RWPhase::rewrite_imm_App(app);
 }
 
 } // namespace mim::plug::tensor::phase

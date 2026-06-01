@@ -276,7 +276,7 @@ const Def* Fuse::rewrite_imm_App(const App* app) {
             return res;
         }
     }
-    return Rewriter::rewrite_imm_App(app);
+    return RWPhase::rewrite_imm_App(app);
 }
 
 } // namespace mim::plug::tensor::phase

@@ -546,7 +546,7 @@ const Def* LowerMapReduce::rewrite_imm_App(const App* app) {
     } else if (auto mr = Axm::isa<tensor::map_reduce>(app)) {
         if (auto res = lower_map_reduce(mr)) return res;
     }
-    return Rewriter::rewrite_imm_App(app);
+    return RWPhase::rewrite_imm_App(app);
 }
 
 } // namespace mim::plug::tensor::phase
