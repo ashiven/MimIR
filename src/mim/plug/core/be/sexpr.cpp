@@ -869,7 +869,9 @@ std::string Emitter::emit_bb(BB& bb, const Def* def) {
         return os.str();
     }
 
-    if (typed()) std::print(os, "\n{}(@ {}", tab, emit_type(bb, def->type()));
+    // We don't annotate axioms since this makes the sexpr's extremely cluttered and the axioms
+    // will already be emitted separately with an annotation.
+    if (typed() && !def->isa<Axm>()) std::print(os, "\n{}(@ {}", tab, emit_type(bb, def->type()));
 
     if (def->isa_imm<Lam>()) {
         assert("false" && "TODO immutable lam inline");
@@ -997,7 +999,7 @@ std::string Emitter::emit_bb(BB& bb, const Def* def) {
         fe::unreachable();
     }
 
-    if (typed()) std::print(os, ")");
+    if (typed() && !def->isa<Axm>()) std::print(os, ")");
     --tab;
 
     return os.str();
