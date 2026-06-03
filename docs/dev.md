@@ -502,8 +502,8 @@ void visit(DefSet& done, const Def* def) {
 void visit() {
     DefSet done;
 
-    for (auto mut : world.roots())
-        visit(done, mut);
+    for (auto def : world.roots())
+        visit(done, def);
 }
 ```
 

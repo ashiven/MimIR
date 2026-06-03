@@ -228,6 +228,7 @@ public:
         /// @note The iteration will see all old externals, of course.
         Vector<Def*> mutate() const { return {muts().begin(), muts().end()}; }
         Def* operator[](Sym name) const { return mim::lookup(sym2mut_, name); } ///< Lookup by @p name.
+        size_t size() const { return sym2mut_.size(); }
         ///@}
 
         ///@name externalize/internalize
@@ -256,8 +257,10 @@ public:
 
     /// annexes() + externals().muts() in this order.
     auto roots() const {
-        // TODO use std::views::concat - once we have C++26
-        auto res = Vector<const Def*>(annexes().begin(), annexes().end());
+        auto res = Vector<const Def*>(); // TODO use std::views::concat - once we have C++26
+        res.reserve(annexes().size() + externals().size());
+        for (auto def : annexes())
+            res.emplace_back(def);
         for (auto mut : externals().muts())
             res.emplace_back(mut);
         return res;
