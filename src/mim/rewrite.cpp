@@ -119,8 +119,11 @@ const Def* Rewriter::rewrite_mut_Pack(      Pack* d) { return rewrite_mut_Seq(d)
 // clang-format on
 
 const Def* Rewriter::rewrite_imm_App(const App* d) {
-    auto new_callee = rewrite(d->callee());
+    // Rewrite the arg before the callee:
+    // the callee may be a recursive mutable that, when rewritten first, eagerly expands its body before the concrete
+    // argument is available to specialize it, breaking partial-evaluation termination
     auto new_arg    = rewrite(d->arg());
+    auto new_callee = rewrite(d->callee());
     return world().app(new_callee, new_arg);
 }
 
