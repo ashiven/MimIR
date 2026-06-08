@@ -199,7 +199,6 @@ const Def* Rewriter::rewrite_mut_Sigma(Sigma* d) {
 const Def* Rewriter::rewrite_mut_Global(Global* d) {
     return rewrite_stub(d, world().global(rewrite(d->type()), d->is_mutable()));
 }
-// clang-format on
 
 const Def* Rewriter::rewrite_imm_Axm(const Axm* a) {
     if (&a->world() != &world()) {
