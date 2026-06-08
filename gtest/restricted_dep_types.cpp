@@ -257,5 +257,6 @@ TEST(RestrictedDependentTypes, ll) {
     }
 
     optimize(w);
-    driver.backend("ll")(w, std::cout);
+    driver.load("ll");
+    if (auto emit = driver.get_fun_ptr<void(World&, std::ostream&)>("ll", "mim_emit_ll")) emit(w, std::cout);
 }

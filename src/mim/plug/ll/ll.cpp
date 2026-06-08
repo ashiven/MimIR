@@ -1,7 +1,11 @@
-#include "mim/plug/core/be/ll.h"
+#include "mim/plug/ll/ll.h"
 
 #include <fstream>
 #include <string>
+
+#include <mim/config.h>
+
+#include "mim/plugin.h"
 
 #include "mim/util/sys.h"
 
@@ -37,3 +41,10 @@ int compile_and_run(World& world, std::string name, std::string args) {
 }
 
 } // namespace mim::ll
+
+using namespace mim;
+
+/// Backend entry point reached by the driver via `Driver::get_fun_ptr`.
+extern "C" MIM_EXPORT void mim_emit_ll(World& world, std::ostream& ostream) { ll::emit(world, ostream); }
+
+extern "C" MIM_EXPORT Plugin mim_get_plugin() { return {"ll", MIM_VERSION, nullptr, nullptr}; }

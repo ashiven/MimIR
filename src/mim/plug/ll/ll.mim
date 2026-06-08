@@ -1,0 +1,10 @@
+/// # The ll Plugin {#ll}
+///
+/// @see mim::ll
+///
+/// [TOC]
+///
+/// The LLVM backend.
+/// This plugin does not introduce any annexes; it only provides the `ll` backend that emits LLVM IR for a fully lowered MimIR program.
+/// Load it via `mim foo.mim --output-ll <file>` (or `-` for `stdout`).
+///

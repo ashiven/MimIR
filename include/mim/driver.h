@@ -119,7 +119,6 @@ public:
     const auto& stages() const { return stages_; }
     auto normalizer(flags_t flags) const { return lookup(normalizers_, flags); }
     auto normalizer(plugin_t d, tag_t t, sub_t s) const { return normalizer(d | flags_t(t << 8u) | s); }
-    auto backend(std::string_view name) { return lookup(backends_, name); }
     ///@}
 
 private:
@@ -131,7 +130,6 @@ private:
     World world_;
     std::list<fs::path> search_paths_;
     std::list<fs::path>::iterator insert_ = search_paths_.end();
-    Backends backends_;
     Flags2Stages stages_;
     Normalizers normalizers_;
     Imports imports_;

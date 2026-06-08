@@ -30,7 +30,8 @@ int main(int, char**) {
 
         optimize(w);
         std::ofstream ofs("hello.ll");
-        driver.backend("ll")(w, ofs);
+        driver.load("ll");
+        if (auto emit = driver.get_fun_ptr<void(World&, std::ostream&)>("ll", "mim_emit_ll")) emit(w, ofs);
         ofs.close(); // make sure everything is written before clang is invoked
 
         sys::system("clang hello.ll -o hello -Wno-override-module");

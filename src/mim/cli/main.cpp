@@ -9,6 +9,7 @@
 #include "mim/config.h"
 #include "mim/driver.h"
 #include "mim/phase.h"
+#include "mim/sexpr.h"
 
 #include "mim/ast/parser.h"
 #include "mim/pass/optimize.h"
@@ -188,32 +189,23 @@ int main(int argc, char** argv) {
                 if (auto s = os[Nest]) mim::Nest(world).dot(*s);
 
                 if (auto s = os[LL]) {
-                    if (auto backend = driver.backend("ll"))
-                        backend(world, *s);
+                    if (!driver.is_loaded(driver.sym("ll"))) driver.load("ll");
+                    if (auto emit = driver.get_fun_ptr<void(World&, std::ostream&)>("ll", "mim_emit_ll"))
+                        emit(world, *s);
                     else
-                        error("'ll' emitter not loaded; try loading 'core' plugin");
+                        error("could not load the 'll' backend");
                 }
                 if (auto s = os[SExpr]) {
                     if (sexpr_include_types)
-                        if (auto backend = driver.backend("sexpr-typed"))
-                            backend(world, *s);
-                        else
-                            error("'sexpr-typed' emitter not loaded; try loading 'core' plugin");
-                    else if (auto backend = driver.backend("sexpr"))
-                        backend(world, *s);
+                        sexpr::emit_typed(world, *s);
                     else
-                        error("'sexpr' emitter not loaded; try loading 'core' plugin");
+                        sexpr::emit(world, *s);
                 }
                 if (auto s = os[SlottedSExpr]) {
                     if (sexpr_include_types)
-                        if (auto backend = driver.backend("sexpr-slotted-typed"))
-                            backend(world, *s);
-                        else
-                            error("'sexpr-slotted-typed' emitter not loaded; try loading 'core' plugin");
-                    else if (auto backend = driver.backend("sexpr-slotted"))
-                        backend(world, *s);
+                        sexpr::emit_slotted_typed(world, *s);
                     else
-                        error("'sexpr-slotted' emitter not loaded; try loading 'core' plugin");
+                        sexpr::emit_slotted(world, *s);
                 }
             } else {
                 error("couldn't read file '{}'", input);
