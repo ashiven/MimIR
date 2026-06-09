@@ -170,7 +170,7 @@ TEST(Automaton, Regex2NFA) {
 TEST(Automaton, Regex2NFAAorBplusA) {
     Driver driver;
     World& w = driver.world();
-    ast::load_plugis(w, "regex");
+    ast::load_plugin(w, "regex");
 
     auto pattern = w.call<regex::conj>(
         Defs{w.call(regex::quant::plus,
