@@ -142,10 +142,11 @@ int main(int argc, char** argv) {
             ast::Ptrs<ast::Import> imports;
 
             for (const auto& plugin : plugins) {
-                auto mod = parser.plugin(plugin);
-                auto import
-                    = ast.ptr<ast::Import>(Loc(), ast::Tok::Tag::K_plugin, Dbg(driver.sym(plugin)), std::move(mod));
-                imports.emplace_back(std::move(import));
+                if (auto mod = parser.plugin(plugin)) {
+                    auto import
+                        = ast.ptr<ast::Import>(Loc(), ast::Tok::Tag::K_plugin, Dbg(driver.sym(plugin)), std::move(mod));
+                    imports.emplace_back(std::move(import));
+                }
             }
 
             if (auto mod = parser.import(driver.sym(input), os[Md])) {
