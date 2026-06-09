@@ -14,8 +14,7 @@ Let's jump straight into an example.
 It owns a few global facilities such as [Flags](@ref mim::Flags), the [Log](@ref mim::Log), and the current [World](@ref mim::World).
 In this example, the log is configured to write debug output to `std::cerr`; see also @ref clidebug.
 
-Next, the parser loads the [compile](@ref compile), [opt](@ref opt), and [core](@ref core) plugins.
-The last one in turn loads the [mem](@ref mem) plugin.
+Next, we load the [core](@ref core), and [ll](@ref ll) plugins.
 A plugin consists of two parts:
 
 1. a shared object (`.so`/`.dll`), and
