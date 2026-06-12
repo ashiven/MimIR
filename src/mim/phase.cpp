@@ -97,7 +97,7 @@ bool RWPhase::analyze() {
     return false;
 }
 
-void RWPhase::rewrite_annex(flags_t f, Sym sym, const Def* def) { new_world().register_annex(f, sym, rewrite(def)); }
+void RWPhase::rewrite_annex(flags_t f, Sym sym, const Def* def) { new_world().annexes().attach(f, sym, rewrite(def)); }
 
 void RWPhase::rewrite_external(Def* old_mut) {
     auto new_mut = rewrite(old_mut)->as_mut();

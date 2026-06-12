@@ -21,10 +21,10 @@ public:
     /// @p name is the full syntactic name of *this* registration (`%plugin.tag` or `%plugin.tag.sub`).
     /// We must take it from the declaration rather than from Def::sym, since hash-consing can make several
     /// annexes share a single Def (e.g. `let %foo.bar = 23; let %foo.baz = 23;`).
-    void register_annex(AnnexInfo* annex, sub_t sub, Sym name, const Def* def) {
+    void attach(AnnexInfo* annex, sub_t sub, Sym name, const Def* def) {
         if (annex) {
             const auto& id = annex->id;
-            world().register_annex(id.plugin | (id.tag << 8) | sub, name, def);
+            world().annexes().attach(id.plugin | (id.tag << 8) | sub, name, def);
         }
     }
 
@@ -418,14 +418,14 @@ void AxmDecl::emit(Emitter& e) const {
         auto norm = e.driver().normalizer(id.plugin, id.tag, 0);
         auto axm  = e.world().axm(norm, id.curry, id.trip, mim_type_, id.plugin, id.tag, 0)->set(dbg());
         def_      = axm;
-        e.world().register_annex(id.plugin, id.tag, 0, dbg().sym(), axm);
+        e.world().annexes().attach(id.plugin, id.tag, 0, dbg().sym(), axm);
     } else {
         for (sub_t i = 0, n = num_subs(); i != n; ++i) {
             sub_t s   = i + offset_;
             auto norm = e.driver().normalizer(id.plugin, id.tag, s);
             auto name = e.world().sym(dbg().sym().str() + "."s + sub(i).front()->dbg().sym().str());
             auto axm  = e.world().axm(norm, id.curry, id.trip, mim_type_, id.plugin, id.tag, s)->set(name);
-            e.world().register_annex(id.plugin, id.tag, s, name, axm);
+            e.world().annexes().attach(id.plugin, id.tag, s, name, axm);
 
             for (const auto& alias : sub(i))
                 alias->def_ = axm;
@@ -436,7 +436,7 @@ void AxmDecl::emit(Emitter& e) const {
 void LetDecl::emit(Emitter& e) const {
     auto v = value()->emit(e);
     def_   = ptrn()->emit_value(e, v);
-    if (auto id = ptrn()->isa<IdPtrn>()) e.register_annex(annex_, sub_, id->dbg().sym(), def_);
+    if (auto id = ptrn()->isa<IdPtrn>()) e.attach(annex_, sub_, id->dbg().sym(), def_);
 }
 
 void RecDecl::emit(Emitter& e) const {
@@ -455,7 +455,7 @@ void RecDecl::emit_decl(Emitter& e) const {
 void RecDecl::emit_body(Emitter& e) const {
     body()->emit_body(e, def_);
     // TODO immutabilize?
-    e.register_annex(annex_, sub_, dbg().sym(), def_);
+    e.attach(annex_, sub_, dbg().sym(), def_);
 }
 
 Lam* LamDecl::Dom::emit_value(Emitter& e) const {
@@ -527,7 +527,7 @@ void LamDecl::emit_body(Emitter& e) const {
     }
 
     if (is_external()) doms().front()->lam_->externalize();
-    e.register_annex(annex_, sub_, dbg().sym(), def_);
+    e.attach(annex_, sub_, dbg().sym(), def_);
 }
 
 void CDecl::emit(Emitter& e) const {

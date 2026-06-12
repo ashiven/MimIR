@@ -40,6 +40,18 @@ void World::Externals::internalize(Def* def) {
     assert_unused(num == 1);
 }
 
+const Def* World::Annexes::attach(flags_t flags, Sym sym, const Def* def) {
+    driver().TLOG("register: 0x{:x} -> {} ({})", flags, def, sym);
+    auto plugin = Annex::demangle(driver(), flags);
+    if (driver().is_loaded(plugin)) {
+        assert_emplace(flags2entry_, flags, Annexes::Entry{sym, def});
+        assert_emplace(sym2flags_, sym, flags);
+        def->annex_ = true;
+        return def;
+    }
+    return nullptr;
+}
+
 /*
  * constructor & destructor
  */
@@ -51,7 +63,8 @@ bool World::Lock::guard_ = false;
 World::World(Driver* driver, const State& state)
     : driver_(driver)
     , zonker_(*this)
-    , state_(state) {
+    , state_(state)
+    , move_(driver) {
     data_.univ        = insert<Univ>(*this);
     data_.lit_univ_0  = lit_univ(0);
     data_.lit_univ_1  = lit_univ(1);
@@ -91,18 +104,6 @@ Flags& World::flags() { return driver().flags(); }
 Sym World::sym(const char* s) { return driver().sym(s); }
 Sym World::sym(std::string_view s) { return driver().sym(s); }
 Sym World::sym(const std::string& s) { return driver().sym(s); }
-
-const Def* World::register_annex(flags_t flags, Sym sym, const Def* def) {
-    TLOG("register: 0x{:x} -> {} ({})", flags, def, sym);
-    auto plugin = Annex::demangle(driver(), flags);
-    if (driver().is_loaded(plugin)) {
-        assert_emplace(annexes().flags2entry_, flags, Annexes::Entry{sym, def});
-        assert_emplace(annexes().sym2flags_, sym, flags);
-        def->annex_ = true;
-        return def;
-    }
-    return nullptr;
-}
 
 /*
  * factory methods
