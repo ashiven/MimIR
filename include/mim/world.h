@@ -252,7 +252,7 @@ public:
         ///@{
         const Def* attach(flags_t, Sym, const Def*);
         const Def* attach(plugin_t p, tag_t t, sub_t s, Sym sym, const Def* def) {
-            return attach(p | (flags_t(t) << 8_u64) | flags_t(s), sym, def);
+            return attach(Annex::flags(p, t, s), sym, def);
         }
         ///@}
 

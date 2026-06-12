@@ -22,10 +22,7 @@ public:
     /// We must take it from the declaration rather than from Def::sym, since hash-consing can make several
     /// annexes share a single Def (e.g. `let %foo.bar = 23; let %foo.baz = 23;`).
     void attach(AnnexInfo* annex, sub_t sub, Sym name, const Def* def) {
-        if (annex) {
-            const auto& id = annex->id;
-            world().annexes().attach(id.plugin | (id.tag << 8) | sub, name, def);
-        }
+        if (annex) world().annexes().attach(annex->plugin_id(), annex->id.tag, sub, name, def);
     }
 
     absl::node_hash_map<Sigma*, fe::SymMap<size_t>, GIDHash<const Def*>> sigma2sym2idx;
@@ -396,8 +393,9 @@ const Def* UniqExpr::emit_(Emitter& e) const { return e.world().uniq(inhabitant(
 
 void AxmDecl::emit(Emitter& e) const {
     if (!annex_) return; // Skip emit if binding failed
-    mim_type_ = type()->emit(e);
-    auto& id  = annex_->id;
+    mim_type_   = type()->emit(e);
+    auto& id    = annex_->id;
+    auto plugin = annex_->plugin_id();
 
     std::tie(id.curry, id.trip) = Axm::infer_curry_and_trip(mim_type_);
     if (curry_) {
@@ -415,17 +413,17 @@ void AxmDecl::emit(Emitter& e) const {
     }
 
     if (num_subs() == 0) {
-        auto norm = e.driver().normalizer(id.plugin, id.tag, 0);
-        auto axm  = e.world().axm(norm, id.curry, id.trip, mim_type_, id.plugin, id.tag, 0)->set(dbg());
+        auto norm = e.driver().normalizer(plugin, id.tag, 0);
+        auto axm  = e.world().axm(norm, id.curry, id.trip, mim_type_, plugin, id.tag, 0)->set(dbg());
         def_      = axm;
-        e.world().annexes().attach(id.plugin, id.tag, 0, dbg().sym(), axm);
+        e.world().annexes().attach(plugin, id.tag, 0, dbg().sym(), axm);
     } else {
         for (sub_t i = 0, n = num_subs(); i != n; ++i) {
             sub_t s   = i + offset_;
-            auto norm = e.driver().normalizer(id.plugin, id.tag, s);
+            auto norm = e.driver().normalizer(plugin, id.tag, s);
             auto name = e.world().sym(dbg().sym().str() + "."s + sub(i).front()->dbg().sym().str());
-            auto axm  = e.world().axm(norm, id.curry, id.trip, mim_type_, id.plugin, id.tag, s)->set(name);
-            e.world().annexes().attach(id.plugin, id.tag, s, name, axm);
+            auto axm  = e.world().axm(norm, id.curry, id.trip, mim_type_, plugin, id.tag, s)->set(name);
+            e.world().annexes().attach(plugin, id.tag, s, name, axm);
 
             for (const auto& alias : sub(i))
                 alias->def_ = axm;

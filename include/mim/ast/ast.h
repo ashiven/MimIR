@@ -25,20 +25,25 @@ using Ptrs = std::deque<Ptr<T>>;
 using Dbgs = std::deque<Dbg>;
 
 struct AnnexInfo {
-    AnnexInfo(Sym sym_plugin, Sym sym_tag, plugin_t id_plugin, tag_t id_tag)
+    AnnexInfo(Sym sym_plugin, Sym sym_tag, tag_t id_tag)
         : sym{sym_plugin, sym_tag}
-        , id{id_plugin, id_tag, 0, 0} {
-        assert(Annex::mangle(sym_plugin) == id_plugin);
-    }
+        , id{id_tag, 0, 0} {}
+
+    /// The mangled `plugin` part of the flags.
+    /// Derived from sym.plugin which is guaranteed mangleable by the time an AnnexInfo exists.
+    plugin_t plugin_id() const { return *Annex::mangle(sym.plugin); }
+    /// The base flags (`plugin` + `tag`, no `sub`).
+    flags_t base() const { return Annex::flags(plugin_id(), id.tag); }
 
     struct {
         Sym plugin, tag;
     } sym;
+
     struct {
-        plugin_t plugin;
         tag_t tag;
-        uint8_t curry, trip;
+        u8 curry, trip;
     } id;
+
     std::deque<std::deque<Sym>> subs; ///< List of subs which is a list of aliases.
     Dbg normalizer;
     std::optional<bool> pi;
