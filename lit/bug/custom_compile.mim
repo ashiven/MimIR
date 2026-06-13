@@ -1,0 +1,14 @@
+// RUN: %mim %s
+
+import compile;
+
+lam extern _compile(): %compile.Phase =
+    %compile.phases ff (
+        %compile.phases tt (
+            %compile.beta_red_phase,
+            %compile.eta_red_phase,
+        ),
+    );
+
+fun extern foo(x: Nat): Nat =
+    return x;
