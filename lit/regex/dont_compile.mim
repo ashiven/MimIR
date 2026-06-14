@@ -1,7 +1,7 @@
 // UNSUPPORTED: always
 // RUN: %mim -p opt %s -o -
 
-import compile;
+plugin compile;
 
 // we want to check the normalizer working → that's much easier not having the lower_regex phase running :)
 lam extern _compile(): %compile.Phase =

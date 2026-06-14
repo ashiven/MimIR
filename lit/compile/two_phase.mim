@@ -2,7 +2,7 @@
 // RUN: %mim -p opt %s -p ll -o - | %FileCheck %s
 
 plugin core;
-import compile;
+plugin compile;
 
 con f [mem : %mem.M 0, a : I32, return : Cn [%mem.M 0, I32]] =
     return (mem, a);

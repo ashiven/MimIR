@@ -6,6 +6,7 @@
 plugin tensor;
 plugin core;
 plugin opt;
+plugin compile;
 
 lam add1 (x: Nat): Nat = %core.nat.add (x, 1);
 lam mul2 (x: Nat): Nat = %core.nat.mul (x, 2);

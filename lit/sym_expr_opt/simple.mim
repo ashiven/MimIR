@@ -1,5 +1,6 @@
 // RUN: %mim -p opt %s -o - | %FileCheck %s
 plugin core;
+plugin compile;
 
 lam f (x1 x2 x3: Nat)@ff: Nat = %core.nat.add (x1, %core.nat.add (x2, x3));
 lam g (x y: Nat)@ff: Nat = y;

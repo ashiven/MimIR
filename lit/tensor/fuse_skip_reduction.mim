@@ -5,6 +5,7 @@
 plugin tensor;
 plugin core;
 plugin opt;
+plugin compile;
 
 lam add1 (x: Nat): Nat = %core.nat.add (x, 1);
 

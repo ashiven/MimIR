@@ -5,6 +5,7 @@ plugin core;
 plugin direct;
 plugin affine;
 plugin math;
+plugin compile;
 
 let f32 = %math.f32;
 let F32 = %math.F32;
